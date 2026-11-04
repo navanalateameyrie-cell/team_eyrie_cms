@@ -1,0 +1,11 @@
+**/bin
+**/obj
+**/.vs
+**/.vscode
+**/*.user
+**/*.suo
+**/node_modules
+**/tests/**/TestResults
+**/App_Data
+*.sqlite
+*.db

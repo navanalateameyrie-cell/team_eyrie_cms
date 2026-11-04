@@ -1,0 +1,43 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background-color: #f5f6f8;
+  color: #202b3c;
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle corporate focus ring */
+*:focus-visible {
+  outline: 2px solid #172b4d;
+  outline-offset: 2px;
+}
+
+/* Custom restrained scrollbar for enterprise data views */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d3d9e3;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #98a2b3;
+}

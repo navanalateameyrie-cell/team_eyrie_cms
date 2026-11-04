@@ -1,0 +1,56 @@
+# Single-command bring-up for the full stack. Postgres + API + web, with named volumes for
+# anything that must survive a `docker compose down`. The API seeds dev identity/role data on
+# first start (admin@cms.local / Admin!23) ONLY when ASPNETCORE_ENVIRONMENT is Development.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: cms
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d cms"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ConnectionStrings__CmsDb: "Host=db;Port=5432;Database=cms;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:-change-me-change-me-change-me-change-me-change-me-123}
+      Jwt__Issuer: CMS.Api
+      Jwt__Audience: CMS.Client
+      Jwt__AccessTokenMinutes: "60"
+      DocumentStorage__Root: /app/App_Data/documents
+      Mail__DevDropFolder: /app/App_Data/mail-drop
+      # SMTP, FirmProfile and other settings live in the DB (/admin/settings) once the app is up.
+    volumes:
+      - app-data:/app/App_Data
+    ports:
+      - "${API_PORT:-5080}:8080"
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - "${WEB_PORT:-5173}:8080"
+    restart: unless-stopped
+
+volumes:
+  pg-data:
+  app-data:
