@@ -481,14 +481,14 @@ export default function Layout() {
       {/* Main Layout Area */}
       <div className={`flex-1 flex flex-col min-h-screen min-w-0 transition-all duration-200 ${collapsed ? "lg:pl-20" : "lg:pl-64"}`}>
         {/* Top Navbar */}
-        <header className="sticky top-0 z-20 bg-navy-900 border-b border-navy-800 shadow-sm">
+        <header className="sticky top-0 z-20 bg-gradient-to-r from-[#dbeafe] via-[#e0f2fe] to-[#eff6ff] border-b border-blue-200/90 shadow-2xs backdrop-blur-md">
           <div className="w-full px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-4">
             {/* Mobile hamburger & Breadcrumbs */}
             <div className="flex items-center gap-3 min-w-0">
               <button
                 type="button"
                 onClick={() => setMobileOpen(true)}
-                className="lg:hidden p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-navy-800 focus:outline-none"
+                className="lg:hidden p-1.5 rounded-lg text-slate-600 hover:text-navy-950 hover:bg-blue-200/60 focus:outline-none"
                 aria-label="Open sidebar"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -500,15 +500,15 @@ export default function Layout() {
               <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-2 text-xs">
                 {breadcrumbs.map((crumb, idx) => (
                   <div key={idx} className="flex items-center gap-2">
-                    {idx > 0 && <span className="text-slate-600">/</span>}
+                    {idx > 0 && <span className="text-blue-300 font-bold">/</span>}
                     {crumb.to ? (
-                      <NavLink to={crumb.to} className="text-slate-400 hover:text-white transition-colors">
+                      <NavLink to={crumb.to} className="text-slate-600 hover:text-navy-900 font-medium transition-colors">
                         {crumb.label}
                       </NavLink>
                     ) : crumb.active ? (
-                      <span className="text-white font-medium">{crumb.label}</span>
+                      <span className="text-navy-950 font-bold">{crumb.label}</span>
                     ) : (
-                      <span className="text-slate-400">{crumb.label}</span>
+                      <span className="text-slate-600 font-medium">{crumb.label}</span>
                     )}
                   </div>
                 ))}
@@ -518,8 +518,8 @@ export default function Layout() {
             {/* Right toolbar: FY Indicator, Search, Notifications, User Menu */}
             <div className="flex items-center gap-2.5 sm:gap-4 shrink-0">
               {/* Financial Year Pill */}
-              <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-navy-800 border border-navy-700 text-[11px] font-mono text-slate-300">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/90 border border-blue-200/90 text-[11px] font-mono text-navy-800 shadow-2xs">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span>FY 2024-25</span>
               </div>
 
@@ -532,15 +532,15 @@ export default function Layout() {
                   <button
                     type="button"
                     onClick={() => setUserMenuOpen((v) => !v)}
-                    className="flex items-center gap-2 p-1.5 rounded-lg text-left hover:bg-navy-800 transition-colors focus:outline-none focus:ring-2 focus:ring-gold-500"
+                    className="flex items-center gap-2 p-1.5 rounded-lg text-left hover:bg-blue-200/50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
                   >
-                    <div className="h-7 w-7 rounded-full bg-navy-700 text-gold-400 border border-gold-500/40 flex items-center justify-center font-bold text-xs uppercase shadow-sm">
+                    <div className="h-7 w-7 rounded-full bg-gradient-to-br from-blue-600 to-navy-900 text-white border border-blue-300 flex items-center justify-center font-bold text-xs uppercase shadow-2xs">
                       {userName ? userName.charAt(0) : "U"}
                     </div>
-                    <span className="hidden md:inline-block text-xs font-medium text-white max-w-[120px] truncate">
+                    <span className="hidden md:inline-block text-xs font-semibold text-navy-950 max-w-[120px] truncate">
                       {userName}
                     </span>
-                    <span className="text-slate-400 text-xs hidden md:inline">▾</span>
+                    <span className="text-slate-500 text-xs hidden md:inline">▾</span>
                   </button>
 
                   {userMenuOpen && (
