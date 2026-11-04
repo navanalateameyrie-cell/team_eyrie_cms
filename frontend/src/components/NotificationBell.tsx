@@ -74,7 +74,7 @@ export default function NotificationBell() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative rounded-lg p-2 text-slate-600 hover:text-[#172A45] hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[#C49A52]/40"
+        className="relative rounded-xl p-2 text-slate-600 hover:text-[#102747] bg-white/80 hover:bg-white border border-[#CBDCE9] transition-all shadow-2xs focus:outline-none focus:ring-2 focus:ring-[#348FE0]/40"
         aria-label="Practice Notifications"
       >
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

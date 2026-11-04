@@ -73,19 +73,20 @@ export default function DonutChart({
   const activeItem = hoveredIndex !== null && slices[hoveredIndex] ? slices[hoveredIndex] : null;
 
   return (
-    <Card className={`flex flex-col h-full bg-white border border-[#E3E8F0] rounded-2xl shadow-xs hover:shadow-md transition-shadow duration-200 ${className}`}>
+    <Card className={`flex flex-col h-full bg-white border border-[#E0E6EF] rounded-2xl shadow-xs hover:shadow-md transition-shadow duration-200 overflow-hidden ${className}`}>
       <CardHeader
+        variant="navy"
         title={title}
         subtitle={subtitle}
         icon={
-          <svg className="w-4 h-4 text-[#C49A52]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4 text-[#C59A52]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
           </svg>
         }
         action={
           total > 0 ? (
-            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-navy-50 text-navy-900 border border-navy-200/60 font-mono tabular-nums">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-white/10 text-white border border-white/20 font-mono tabular-nums">
               {total.toLocaleString()} total
             </span>
           ) : undefined
@@ -194,11 +195,10 @@ export default function DonutChart({
                     key={s.label}
                     onMouseEnter={() => setHoveredIndex(idx)}
                     onMouseLeave={() => setHoveredIndex(null)}
-                    className={`flex items-center justify-between p-2 rounded-lg text-xs cursor-pointer transition-colors border ${
-                      isHovered
-                        ? "bg-slate-50 border-slate-200 shadow-2xs"
-                        : "border-transparent hover:bg-slate-50/70"
-                    }`}
+                    className={`flex items-center justify-between p-2 rounded-lg text-xs cursor-pointer transition-colors border ${isHovered
+                      ? "bg-slate-50 border-slate-200 shadow-2xs"
+                      : "border-transparent hover:bg-slate-50/70"
+                      }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <span

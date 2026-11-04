@@ -62,26 +62,27 @@ export default function HorizontalBarChart({
   }
 
   return (
-    <Card className={`flex flex-col h-full bg-white border border-[#E3E8F0] rounded-2xl shadow-xs hover:shadow-md transition-shadow duration-200 ${className}`}>
+    <Card className={`flex flex-col h-full bg-white border border-[#E0E6EF] rounded-2xl shadow-xs hover:shadow-md transition-shadow duration-200 overflow-hidden ${className}`}>
       <CardHeader
+        variant="navy"
         title={title}
         subtitle={subtitle}
         icon={
-          <svg className="w-4 h-4 text-[#C49A52]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4 text-[#C59A52]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
         }
         action={
           total > 0 ? (
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-navy-50 text-navy-900 border border-navy-200/60 font-mono tabular-nums">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-white/10 text-white border border-white/20 font-mono tabular-nums">
                 {total.toLocaleString()} {totalLabel.toLowerCase()}
               </span>
               {canExpand && (
                 <button
                   type="button"
                   onClick={() => setExpanded(!expanded)}
-                  className="text-xs font-semibold text-navy-700 hover:text-navy-900 transition-colors focus:outline-none focus:underline"
+                  className="text-xs font-semibold text-[#E8C98F] hover:text-white transition-colors focus:outline-none focus:underline"
                   aria-expanded={expanded}
                   aria-controls={chartId}
                 >
