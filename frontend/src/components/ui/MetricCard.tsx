@@ -186,9 +186,8 @@ export function MetricCard({
   return (
     <div
       onClick={onClick}
-      className={`relative overflow-hidden rounded-2xl border ${accent.cardBg} ${accent.borderColor} ${accent.cardShadow} transition-all duration-200 flex flex-col justify-between group ${
-        onClick ? "cursor-pointer hover:-translate-y-0.5" : ""
-      } ${className}`}
+      className={`relative overflow-hidden rounded-2xl border ${accent.cardBg} ${accent.borderColor} ${accent.cardShadow} transition-all duration-200 flex flex-col justify-between group ${onClick ? "cursor-pointer hover:-translate-y-0.5" : ""
+        } ${className}`}
     >
       {/* Top Accent Stripe */}
       <div className={`h-1 w-full bg-gradient-to-r ${accent.topStripe}`} />
@@ -231,11 +230,10 @@ export function MetricCard({
             </span>
             {trendText && (
               <span
-                className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${
-                  isPositive
-                    ? "bg-emerald-50 text-[#16A477] border border-emerald-200"
-                    : "bg-rose-50 text-[#D94D50] border border-rose-200"
-                }`}
+                className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${isPositive
+                  ? "bg-emerald-50 text-[#16A477] border border-emerald-200"
+                  : "bg-rose-50 text-[#D94D50] border border-rose-200"
+                  }`}
               >
                 {isPositive ? "↑" : "↓"} {trendText}
               </span>
