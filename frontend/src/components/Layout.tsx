@@ -256,23 +256,24 @@ export default function Layout() {
   const breadcrumbs = getBreadcrumbs();
 
   const sidebarContent = (
-    <div className={`flex flex-col h-full bg-navy-900 text-slate-300 transition-all duration-200 select-none ${collapsed ? "w-20" : "w-64"}`}>
+    <div className={`flex flex-col h-full bg-[#0D1F38] text-slate-300 transition-all duration-200 select-none ${collapsed ? "w-20" : "w-[255px]"}`}>
       {/* Brand Header */}
-      <div className={`py-4 border-b border-navy-800 flex items-center justify-between ${collapsed ? "px-3 justify-center" : "px-5"}`}>
+      <div className={`py-4 border-b border-[#142B49] flex items-center justify-between ${collapsed ? "px-3 justify-center" : "px-5"}`}>
         <NavLink to="/dashboard" className="flex items-center gap-3 group">
-          <div className="h-9 w-9 rounded-lg bg-brand-500 text-white font-bold flex items-center justify-center shadow-md group-hover:bg-brand-600 transition-colors shrink-0">
+          <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-[#C49A52] to-[#B08642] text-[#0D1F38] font-black flex items-center justify-center text-sm shadow-md group-hover:brightness-110 transition-all shrink-0">
             CA
           </div>
           {!collapsed && (
             <div className="min-w-0">
               <div className="text-white font-bold tracking-wide leading-tight text-base flex items-center gap-1.5">
                 <span>CMS</span>
-                <span className="text-[10px] font-mono text-gold-400 bg-gold-500/10 border border-gold-500/30 px-1 py-0.2 rounded font-semibold tracking-wider">
-                  ENTERPRISE
+                <span className="text-[#E4C48A]">_CA</span>
+                <span className="text-[9px] font-mono text-[#E4C48A] bg-[#C49A52]/15 border border-[#C49A52]/30 px-1 py-0.2 rounded font-semibold tracking-wider">
+                  ERP
                 </span>
               </div>
-              <div className="text-[11px] text-slate-400 font-medium leading-tight truncate">
-                Chartered Accountants
+              <div className="text-[10px] text-[#E4C48A] font-semibold tracking-wider uppercase leading-tight truncate">
+                Practice Management
               </div>
             </div>
           )}
@@ -298,28 +299,26 @@ export default function Layout() {
           return (
             <div key={group.label} className="space-y-1">
               {!collapsed ? (
-                <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-[#728096]">
                   {group.label}
                 </div>
               ) : (
-                <div className="my-2 border-t border-navy-800/60 mx-2" title={group.label} />
+                <div className="my-2 border-t border-[#142B49] mx-2" title={group.label} />
               )}
               <div className="space-y-0.5 mt-1">
                 {visibleItems.map((item) => (
                   <NavLink
                     key={item.to}
                     to={item.to}
-                    end={item.to === "/"}
+                    end={item.to === "/dashboard" || item.to === "/"}
                     title={collapsed ? item.label : undefined}
                     className={({ isActive }) =>
-                      `flex items-center rounded-lg font-medium transition-all ${
-                        collapsed
-                          ? "justify-center p-2.5 mx-auto"
-                          : "gap-2.5 px-3 py-2"
-                      } ${
-                        isActive
-                          ? "bg-navy-800 text-gold-400 border-l-2 border-gold-400 shadow-sm font-semibold"
-                          : "text-slate-300 hover:bg-navy-800 hover:text-white"
+                      `flex items-center rounded-xl font-medium transition-all ${collapsed
+                        ? "justify-center p-2.5 mx-auto"
+                        : "gap-2.5 px-3 py-2"
+                      } ${isActive
+                        ? "bg-gradient-to-r from-[#C49A52] to-[#B08642] text-white font-semibold shadow-sm border-l-4 border-[#E4C48A]"
+                        : "text-slate-300 hover:bg-[#142B49] hover:text-white"
                       }`
                     }
                   >
@@ -336,26 +335,24 @@ export default function Layout() {
         {hasPermission("masters.read") && (
           <div className="space-y-1">
             {!collapsed ? (
-              <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-[#728096]">
                 Reference Data
               </div>
             ) : (
-              <div className="my-2 border-t border-navy-800/60 mx-2" title="Reference Data" />
+              <div className="my-2 border-t border-[#142B49] mx-2" title="Reference Data" />
             )}
             <div className="space-y-0.5 mt-1">
               <button
                 type="button"
                 onClick={() => setMastersExpanded((v) => !v)}
                 title={collapsed ? "Reference Masters" : undefined}
-                className={`w-full flex items-center rounded-lg font-medium transition-all text-left ${
-                  collapsed
-                    ? "justify-center p-2.5"
-                    : "justify-between px-3 py-2"
-                } ${
-                  isMastersActive
-                    ? "bg-navy-800 text-gold-400 font-semibold border-l-2 border-gold-400"
-                    : "text-slate-300 hover:bg-navy-800 hover:text-white"
-                }`}
+                className={`w-full flex items-center rounded-xl font-medium transition-all text-left ${collapsed
+                  ? "justify-center p-2.5"
+                  : "justify-between px-3 py-2"
+                  } ${isMastersActive
+                    ? "bg-gradient-to-r from-[#C49A52] to-[#B08642] text-white font-semibold shadow-sm border-l-4 border-[#E4C48A]"
+                    : "text-slate-300 hover:bg-[#142B49] hover:text-white"
+                  }`}
               >
                 <div className={`flex items-center ${collapsed ? "justify-center" : "gap-2.5"}`}>
                   <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -369,16 +366,15 @@ export default function Layout() {
               </button>
 
               {(!collapsed && (mastersExpanded || isMastersActive)) && (
-                <div className="pl-6 space-y-0.5 pt-1 border-l border-navy-800 ml-4">
+                <div className="pl-6 space-y-0.5 pt-1 border-l border-[#142B49] ml-4">
                   {masterSubItems.map((sub) => (
                     <NavLink
                       key={sub.to}
                       to={sub.to}
                       className={({ isActive }) =>
-                        `block px-2.5 py-1.5 rounded-md text-[11px] transition-colors ${
-                          isActive
-                            ? "text-gold-400 font-semibold bg-navy-800/80"
-                            : "text-slate-400 hover:text-white hover:bg-navy-800/50"
+                        `block px-2.5 py-1.5 rounded-lg text-[11px] transition-colors ${isActive
+                          ? "text-[#E4C48A] font-semibold bg-[#142B49]"
+                          : "text-slate-400 hover:text-white hover:bg-[#142B49]/50"
                         }`
                       }
                     >
@@ -393,14 +389,14 @@ export default function Layout() {
       </div>
 
       {/* Sidebar Collapse Toggle & User Profile Card */}
-      <div className="p-2 border-t border-navy-800 bg-navy-950/70 space-y-2">
+      <div className="p-2 border-t border-[#142B49] bg-[#142B49]/80 space-y-2">
         {/* Collapse button for desktop */}
         <div className="hidden lg:flex items-center justify-end">
           <button
             type="button"
             onClick={toggleCollapse}
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="w-full flex items-center justify-center gap-2 py-1.5 px-2 rounded-md text-slate-400 hover:text-white hover:bg-navy-800 text-[11px] transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-1.5 px-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#0D1F38] text-[11px] transition-colors"
           >
             <svg
               className={`w-4 h-4 transition-transform ${collapsed ? "rotate-180" : ""}`}
@@ -415,15 +411,15 @@ export default function Layout() {
         </div>
 
         {token ? (
-          <div className={`flex items-center gap-2 p-2 rounded-lg bg-navy-900/90 border border-navy-800 ${collapsed ? "justify-center" : "justify-between"}`}>
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="h-7 w-7 rounded-full bg-navy-700 text-gold-400 border border-gold-500/30 flex items-center justify-center font-bold text-xs uppercase shrink-0">
+          <div className={`flex items-center gap-2 p-2 rounded-xl bg-[#0D1F38] border border-[#142B49] ${collapsed ? "justify-center" : "justify-between"}`}>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="h-7 w-7 rounded-full bg-[#102747] text-[#C49A52] border border-[#C49A52]/40 flex items-center justify-center font-bold text-xs uppercase shrink-0 shadow-xs">
                 {userName ? userName.charAt(0) : "U"}
               </div>
               {!collapsed && (
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-semibold text-white truncate">{userName}</div>
-                  <div className="text-[10px] text-slate-400 truncate">
+                  <div className="text-[10px] text-[#E4C48A] truncate font-mono">
                     {roles[0] ?? "Staff"}
                   </div>
                 </div>
@@ -436,7 +432,7 @@ export default function Layout() {
                   await logout();
                   navigate("/login");
                 }}
-                className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-navy-800 transition-colors shrink-0"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#142B49] transition-colors shrink-0"
                 title="Sign Out"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -448,7 +444,7 @@ export default function Layout() {
         ) : (
           <NavLink
             to="/login"
-            className="flex items-center justify-center w-full py-2 px-3 rounded-lg bg-brand-500 hover:bg-brand-600 text-white font-medium text-xs shadow transition-colors"
+            className="flex items-center justify-center w-full py-2 px-3 rounded-xl bg-[#C49A52] hover:bg-[#b08642] text-white font-medium text-xs shadow-sm transition-colors"
           >
             {collapsed ? "Sign In" : "Sign in to Portal"}
           </NavLink>
@@ -458,9 +454,9 @@ export default function Layout() {
   );
 
   return (
-    <div className="min-h-screen flex bg-slate-50 font-sans text-slate-900">
+    <div className="min-h-screen flex bg-[#F3F5FA] font-sans text-[#172A45]">
       {/* Desktop Sidebar */}
-      <aside className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 z-30 shadow-lg border-r border-navy-800 transition-all duration-200 ${collapsed ? "lg:w-20" : "lg:w-64"}`}>
+      <aside className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 z-30 shadow-lg border-r border-[#142B49] transition-all duration-200 ${collapsed ? "lg:w-20" : "lg:w-[255px]"}`}>
         {sidebarContent}
       </aside>
 
@@ -472,23 +468,23 @@ export default function Layout() {
             onClick={() => setMobileOpen(false)}
             aria-hidden="true"
           />
-          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-navy-900 shadow-xl z-10">
+          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-[#0D1F38] shadow-xl z-10">
             {sidebarContent}
           </div>
         </div>
       )}
 
       {/* Main Layout Area */}
-      <div className={`flex-1 flex flex-col min-h-screen min-w-0 transition-all duration-200 ${collapsed ? "lg:pl-20" : "lg:pl-64"}`}>
+      <div className={`flex-1 flex flex-col min-h-screen min-w-0 transition-all duration-200 ${collapsed ? "lg:pl-20" : "lg:pl-[255px]"}`}>
         {/* Top Navbar */}
-        <header className="sticky top-0 z-20 bg-gradient-to-r from-[#dbeafe] via-[#e0f2fe] to-[#eff6ff] border-b border-blue-200/90 shadow-2xs backdrop-blur-md">
-          <div className="w-full px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-4">
+        <header className="sticky top-0 z-20 bg-white border-b border-[#E3E8F0] shadow-xs">
+          <div className="w-full px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
             {/* Mobile hamburger & Breadcrumbs */}
             <div className="flex items-center gap-3 min-w-0">
               <button
                 type="button"
                 onClick={() => setMobileOpen(true)}
-                className="lg:hidden p-1.5 rounded-lg text-slate-600 hover:text-navy-950 hover:bg-blue-200/60 focus:outline-none"
+                className="lg:hidden p-2 rounded-lg text-slate-600 hover:text-[#172A45] hover:bg-slate-100 focus:outline-none"
                 aria-label="Open sidebar"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -500,31 +496,27 @@ export default function Layout() {
               <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-2 text-xs">
                 {breadcrumbs.map((crumb, idx) => (
                   <div key={idx} className="flex items-center gap-2">
-                    {idx > 0 && <span className="text-blue-300 font-bold">/</span>}
+                    {idx > 0 && <span className="text-slate-300 font-semibold">/</span>}
                     {crumb.to ? (
-                      <NavLink to={crumb.to} className="text-slate-600 hover:text-navy-900 font-medium transition-colors">
+                      <NavLink to={crumb.to} className="text-[#728096] hover:text-[#172A45] font-medium transition-colors">
                         {crumb.label}
                       </NavLink>
                     ) : crumb.active ? (
-                      <span className="text-navy-950 font-bold">{crumb.label}</span>
+                      <span className="text-[#172A45] font-bold">{crumb.label}</span>
                     ) : (
-                      <span className="text-slate-600 font-medium">{crumb.label}</span>
+                      <span className="text-[#728096] font-medium">{crumb.label}</span>
                     )}
                   </div>
                 ))}
               </nav>
             </div>
 
-            {/* Right toolbar: FY Indicator, Search, Notifications, User Menu */}
-            <div className="flex items-center gap-2.5 sm:gap-4 shrink-0">
-              {/* Financial Year Pill */}
-              <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/90 border border-blue-200/90 text-[11px] font-mono text-navy-800 shadow-2xs">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>FY 2024-25</span>
-              </div>
-
+            {/* Right toolbar: Search, Notifications, User Menu */}
+            <div className="flex items-center gap-3 sm:gap-4 shrink-0">
               {token && <GlobalSearchBox />}
               {token && <NotificationBell />}
+
+              <div className="h-6 w-px bg-[#E3E8F0] hidden sm:block" />
 
               {/* User Dropdown Menu */}
               {token ? (
@@ -532,15 +524,20 @@ export default function Layout() {
                   <button
                     type="button"
                     onClick={() => setUserMenuOpen((v) => !v)}
-                    className="flex items-center gap-2 p-1.5 rounded-lg text-left hover:bg-blue-200/50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="flex items-center gap-2.5 p-1.5 rounded-xl text-left hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[#C49A52]/40"
                   >
-                    <div className="h-7 w-7 rounded-full bg-gradient-to-br from-blue-600 to-navy-900 text-white border border-blue-300 flex items-center justify-center font-bold text-xs uppercase shadow-2xs">
+                    <div className="h-8 w-8 rounded-full bg-[#102747] text-[#C49A52] border border-[#C49A52]/30 flex items-center justify-center font-bold text-xs uppercase shadow-xs">
                       {userName ? userName.charAt(0) : "U"}
                     </div>
-                    <span className="hidden md:inline-block text-xs font-semibold text-navy-950 max-w-[120px] truncate">
-                      {userName}
-                    </span>
-                    <span className="text-slate-500 text-xs hidden md:inline">▾</span>
+                    <div className="hidden md:block text-left">
+                      <div className="text-xs font-semibold text-[#172A45] max-w-[120px] truncate leading-tight">
+                        {userName}
+                      </div>
+                      <div className="text-[10px] text-[#728096] leading-tight font-mono">
+                        {roles[0] ?? "Staff"}
+                      </div>
+                    </div>
+                    <span className="text-slate-400 text-xs hidden md:inline">▾</span>
                   </button>
 
                   {userMenuOpen && (

@@ -74,7 +74,7 @@ export default function NotificationBell() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative rounded-lg p-2 text-slate-600 hover:text-navy-950 hover:bg-blue-200/50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
+        className="relative rounded-lg p-2 text-slate-600 hover:text-[#172A45] hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[#C49A52]/40"
         aria-label="Practice Notifications"
       >
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -86,7 +86,7 @@ export default function NotificationBell() {
           />
         </svg>
         {unread > 0 && (
-          <span className="absolute top-1 right-1 inline-flex items-center justify-center rounded-full bg-blue-600 text-white text-[10px] font-bold min-w-[16px] h-[16px] px-1 ring-2 ring-white shadow-2xs">
+          <span className="absolute top-1 right-1 inline-flex items-center justify-center rounded-full bg-[#DC5151] text-white text-[10px] font-bold min-w-[16px] h-[16px] px-1 ring-2 ring-white shadow-2xs">
             {unread > 99 ? "99+" : unread}
           </span>
         )}

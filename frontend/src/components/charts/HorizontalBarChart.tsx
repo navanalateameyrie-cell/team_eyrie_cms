@@ -62,10 +62,15 @@ export default function HorizontalBarChart({
   }
 
   return (
-    <Card className={`flex flex-col h-full bg-white border border-slate-200/90 rounded-xl shadow-xs hover:shadow-md transition-shadow duration-200 ${className}`}>
+    <Card className={`flex flex-col h-full bg-white border border-[#E3E8F0] rounded-2xl shadow-xs hover:shadow-md transition-shadow duration-200 ${className}`}>
       <CardHeader
         title={title}
         subtitle={subtitle}
+        icon={
+          <svg className="w-4 h-4 text-[#C49A52]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        }
         action={
           total > 0 ? (
             <div className="flex items-center gap-2">

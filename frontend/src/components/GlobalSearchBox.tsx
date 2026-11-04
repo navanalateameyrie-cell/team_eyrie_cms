@@ -82,10 +82,10 @@ export default function GlobalSearchBox() {
           onChange={(e) => setQ(e.target.value)}
           onFocus={() => hits.length > 0 && setOpen(true)}
           placeholder="Search clients, PAN, GSTIN…"
-          className="w-full rounded-lg border border-blue-200/90 bg-white/95 pl-9 pr-14 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs transition-colors"
+          className="w-full rounded-xl border border-[#E3E8F0] bg-[#F8FAFC] pl-9 pr-14 py-2 text-xs text-[#172A45] placeholder:text-[#728096] focus:border-[#C49A52] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#C49A52] shadow-2xs transition-colors"
         />
-        <kbd className="pointer-events-none absolute right-2 top-1.5 hidden sm:inline-flex items-center rounded border border-blue-200 bg-blue-50/90 px-1.5 text-[10px] text-blue-700 font-mono font-medium">
-          ⌘K
+        <kbd className="pointer-events-none absolute right-2 top-2 hidden sm:inline-flex items-center rounded border border-[#E3E8F0] bg-white px-1.5 text-[10px] text-slate-500 font-mono shadow-2xs">
+          Ctrl + K
         </kbd>
       </div>
 

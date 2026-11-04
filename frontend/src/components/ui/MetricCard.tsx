@@ -6,7 +6,7 @@ export interface MetricCardProps {
   subtext?: string;
   hint?: string;
   icon?: ReactNode;
-  tone?: "default" | "brand" | "gold" | "success" | "warning" | "danger" | "info" | "purple";
+  tone?: "default" | "brand" | "navy" | "gold" | "success" | "warning" | "danger" | "info" | "purple";
   trend?: {
     value?: string;
     label?: string;
@@ -17,11 +17,10 @@ export interface MetricCardProps {
   className?: string;
 }
 
-interface GlassStyle {
+interface ToneStyle {
   cardBg: string;
   borderColor: string;
-  orbBg: string;
-  topLight: string;
+  topStripe: string;
   labelColor: string;
   valueColor: string;
   iconBg: string;
@@ -33,126 +32,132 @@ interface GlassStyle {
   cardShadow: string;
 }
 
-const toneGlassStyles: Record<string, GlassStyle> = {
-  brand: {
-    cardBg: "bg-gradient-to-br from-[#1e40af] via-[#2563eb] to-[#1e1b4b]",
-    borderColor: "border-white/25 hover:border-white/45",
-    orbBg: "bg-blue-300/30",
-    topLight: "from-white/50 via-white/25 to-transparent",
-    labelColor: "text-blue-100",
+const toneStyles: Record<string, ToneStyle> = {
+  navy: {
+    cardBg: "bg-[#102747]",
+    borderColor: "border-[#142B49] hover:border-[#C49A52]/50",
+    topStripe: "from-[#C49A52] via-[#E4C48A] to-[#C49A52]",
+    labelColor: "text-[#E4C48A]",
     valueColor: "text-white",
-    iconBg: "bg-white/20 backdrop-blur-md shadow-inner",
-    iconText: "text-white",
-    iconBorder: "border-white/30",
-    footerBorder: "border-white/20",
-    footerText: "text-blue-100/90",
-    dotBg: "bg-cyan-300 shadow-[0_0_8px_rgba(103,232,249,0.9)]",
-    cardShadow: "shadow-[0_12px_28px_-6px_rgba(37,99,235,0.45),inset_0_1px_1px_0_rgba(255,255,255,0.35)]",
+    iconBg: "bg-white/10",
+    iconText: "text-[#C49A52]",
+    iconBorder: "border-[#C49A52]/30",
+    footerBorder: "border-white/10",
+    footerText: "text-slate-300",
+    dotBg: "bg-[#C49A52] shadow-[0_0_8px_rgba(196,154,82,0.8)]",
+    cardShadow: "shadow-sm hover:shadow-lg shadow-navy-950/20",
+  },
+  brand: {
+    cardBg: "bg-[#102747]",
+    borderColor: "border-[#142B49] hover:border-[#C49A52]/50",
+    topStripe: "from-[#C49A52] via-[#E4C48A] to-[#C49A52]",
+    labelColor: "text-[#E4C48A]",
+    valueColor: "text-white",
+    iconBg: "bg-white/10",
+    iconText: "text-[#C49A52]",
+    iconBorder: "border-[#C49A52]/30",
+    footerBorder: "border-white/10",
+    footerText: "text-slate-300",
+    dotBg: "bg-[#C49A52] shadow-[0_0_8px_rgba(196,154,82,0.8)]",
+    cardShadow: "shadow-sm hover:shadow-lg shadow-navy-950/20",
   },
   info: {
-    cardBg: "bg-gradient-to-br from-[#0284c7] via-[#0ea5e9] to-[#0369a1]",
-    borderColor: "border-white/25 hover:border-white/45",
-    orbBg: "bg-cyan-300/30",
-    topLight: "from-white/50 via-white/25 to-transparent",
-    labelColor: "text-sky-100",
-    valueColor: "text-white",
-    iconBg: "bg-white/20 backdrop-blur-md shadow-inner",
-    iconText: "text-white",
-    iconBorder: "border-white/30",
-    footerBorder: "border-white/20",
-    footerText: "text-sky-100/90",
-    dotBg: "bg-white shadow-[0_0_8px_rgba(255,255,255,0.9)]",
-    cardShadow: "shadow-[0_12px_28px_-6px_rgba(2,132,199,0.45),inset_0_1px_1px_0_rgba(255,255,255,0.35)]",
+    cardBg: "bg-white",
+    borderColor: "border-[#E3E8F0] hover:border-sky-300",
+    topStripe: "from-[#328CE0] via-sky-400 to-sky-300",
+    labelColor: "text-[#728096]",
+    valueColor: "text-[#172A45]",
+    iconBg: "bg-sky-50",
+    iconText: "text-[#328CE0]",
+    iconBorder: "border-sky-100",
+    footerBorder: "border-slate-100",
+    footerText: "text-[#728096]",
+    dotBg: "bg-[#328CE0]",
+    cardShadow: "shadow-xs hover:shadow-md",
   },
   warning: {
-    cardBg: "bg-gradient-to-br from-[#d97706] via-[#ea580c] to-[#b45309]",
-    borderColor: "border-white/25 hover:border-white/45",
-    orbBg: "bg-yellow-300/30",
-    topLight: "from-white/50 via-white/25 to-transparent",
-    labelColor: "text-amber-100",
-    valueColor: "text-white",
-    iconBg: "bg-white/20 backdrop-blur-md shadow-inner",
-    iconText: "text-white",
-    iconBorder: "border-white/30",
-    footerBorder: "border-white/20",
-    footerText: "text-amber-100/90",
-    dotBg: "bg-yellow-200 shadow-[0_0_8px_rgba(254,240,138,0.9)]",
-    cardShadow: "shadow-[0_12px_28px_-6px_rgba(234,88,12,0.45),inset_0_1px_1px_0_rgba(255,255,255,0.35)]",
+    cardBg: "bg-white",
+    borderColor: "border-[#E3E8F0] hover:border-amber-300",
+    topStripe: "from-[#D49A43] via-amber-400 to-amber-300",
+    labelColor: "text-[#728096]",
+    valueColor: "text-[#172A45]",
+    iconBg: "bg-amber-50",
+    iconText: "text-[#D49A43]",
+    iconBorder: "border-amber-100",
+    footerBorder: "border-slate-100",
+    footerText: "text-[#728096]",
+    dotBg: "bg-[#D49A43]",
+    cardShadow: "shadow-xs hover:shadow-md",
   },
   purple: {
-    cardBg: "bg-gradient-to-br from-[#7c3aed] via-[#6366f1] to-[#4338ca]",
-    borderColor: "border-white/25 hover:border-white/45",
-    orbBg: "bg-fuchsia-300/30",
-    topLight: "from-white/50 via-white/25 to-transparent",
-    labelColor: "text-purple-100",
-    valueColor: "text-white",
-    iconBg: "bg-white/20 backdrop-blur-md shadow-inner",
-    iconText: "text-white",
-    iconBorder: "border-white/30",
-    footerBorder: "border-white/20",
-    footerText: "text-purple-100/90",
-    dotBg: "bg-pink-300 shadow-[0_0_8px_rgba(244,114,182,0.9)]",
-    cardShadow: "shadow-[0_12px_28px_-6px_rgba(124,58,237,0.45),inset_0_1px_1px_0_rgba(255,255,255,0.35)]",
-  },
-  default: {
-    cardBg: "bg-gradient-to-br from-[#1e293b] via-[#334155] to-[#0f172a]",
-    borderColor: "border-white/20 hover:border-white/40",
-    orbBg: "bg-slate-400/25",
-    topLight: "from-white/40 via-white/20 to-transparent",
-    labelColor: "text-slate-200",
-    valueColor: "text-white",
-    iconBg: "bg-white/15 backdrop-blur-md shadow-inner",
-    iconText: "text-white",
-    iconBorder: "border-white/25",
-    footerBorder: "border-white/15",
-    footerText: "text-slate-300/90",
-    dotBg: "bg-slate-300 shadow-[0_0_8px_rgba(203,213,225,0.8)]",
-    cardShadow: "shadow-[0_12px_28px_-6px_rgba(15,23,42,0.45),inset_0_1px_1px_0_rgba(255,255,255,0.25)]",
+    cardBg: "bg-white",
+    borderColor: "border-[#E3E8F0] hover:border-purple-300",
+    topStripe: "from-purple-500 via-indigo-400 to-purple-300",
+    labelColor: "text-[#728096]",
+    valueColor: "text-[#172A45]",
+    iconBg: "bg-purple-50",
+    iconText: "text-purple-600",
+    iconBorder: "border-purple-100",
+    footerBorder: "border-slate-100",
+    footerText: "text-[#728096]",
+    dotBg: "bg-purple-500",
+    cardShadow: "shadow-xs hover:shadow-md",
   },
   success: {
-    cardBg: "bg-gradient-to-br from-[#059669] via-[#0d9488] to-[#065f46]",
-    borderColor: "border-white/25 hover:border-white/45",
-    orbBg: "bg-emerald-300/30",
-    topLight: "from-white/50 via-white/25 to-transparent",
-    labelColor: "text-emerald-100",
-    valueColor: "text-white",
-    iconBg: "bg-white/20 backdrop-blur-md shadow-inner",
-    iconText: "text-white",
-    iconBorder: "border-white/30",
-    footerBorder: "border-white/20",
-    footerText: "text-emerald-100/90",
-    dotBg: "bg-emerald-200 shadow-[0_0_8px_rgba(167,243,208,0.9)]",
-    cardShadow: "shadow-[0_12px_28px_-6px_rgba(13,148,136,0.45),inset_0_1px_1px_0_rgba(255,255,255,0.35)]",
+    cardBg: "bg-white",
+    borderColor: "border-[#E3E8F0] hover:border-emerald-300",
+    topStripe: "from-[#1AA879] via-emerald-400 to-emerald-300",
+    labelColor: "text-[#728096]",
+    valueColor: "text-[#172A45]",
+    iconBg: "bg-emerald-50",
+    iconText: "text-[#1AA879]",
+    iconBorder: "border-emerald-100",
+    footerBorder: "border-slate-100",
+    footerText: "text-[#728096]",
+    dotBg: "bg-[#1AA879]",
+    cardShadow: "shadow-xs hover:shadow-md",
   },
   gold: {
-    cardBg: "bg-gradient-to-br from-[#b45309] via-[#d97706] to-[#78350f]",
-    borderColor: "border-white/25 hover:border-white/45",
-    orbBg: "bg-amber-300/30",
-    topLight: "from-white/50 via-white/25 to-transparent",
-    labelColor: "text-amber-100",
-    valueColor: "text-white",
-    iconBg: "bg-white/20 backdrop-blur-md shadow-inner",
-    iconText: "text-white",
-    iconBorder: "border-white/30",
-    footerBorder: "border-white/20",
-    footerText: "text-amber-100/90",
-    dotBg: "bg-yellow-200 shadow-[0_0_8px_rgba(254,240,138,0.9)]",
-    cardShadow: "shadow-[0_12px_28px_-6px_rgba(217,119,6,0.45),inset_0_1px_1px_0_rgba(255,255,255,0.35)]",
+    cardBg: "bg-white",
+    borderColor: "border-[#E3E8F0] hover:border-amber-300",
+    topStripe: "from-[#C49A52] via-[#E4C48A] to-[#C49A52]",
+    labelColor: "text-[#728096]",
+    valueColor: "text-[#172A45]",
+    iconBg: "bg-amber-50",
+    iconText: "text-[#C49A52]",
+    iconBorder: "border-amber-200",
+    footerBorder: "border-slate-100",
+    footerText: "text-[#728096]",
+    dotBg: "bg-[#C49A52]",
+    cardShadow: "shadow-xs hover:shadow-md",
   },
   danger: {
-    cardBg: "bg-gradient-to-br from-[#e11d48] via-[#dc2626] to-[#991b1b]",
-    borderColor: "border-white/25 hover:border-white/45",
-    orbBg: "bg-rose-300/30",
-    topLight: "from-white/50 via-white/25 to-transparent",
-    labelColor: "text-rose-100",
-    valueColor: "text-white",
-    iconBg: "bg-white/20 backdrop-blur-md shadow-inner",
-    iconText: "text-white",
-    iconBorder: "border-white/30",
-    footerBorder: "border-white/20",
-    footerText: "text-rose-100/90",
-    dotBg: "bg-rose-200 shadow-[0_0_8px_rgba(254,205,211,0.9)]",
-    cardShadow: "shadow-[0_12px_28px_-6px_rgba(225,29,72,0.45),inset_0_1px_1px_0_rgba(255,255,255,0.35)]",
+    cardBg: "bg-white",
+    borderColor: "border-[#E3E8F0] hover:border-rose-300",
+    topStripe: "from-[#DC5151] via-rose-400 to-rose-300",
+    labelColor: "text-[#728096]",
+    valueColor: "text-[#172A45]",
+    iconBg: "bg-rose-50",
+    iconText: "text-[#DC5151]",
+    iconBorder: "border-rose-100",
+    footerBorder: "border-slate-100",
+    footerText: "text-[#728096]",
+    dotBg: "bg-[#DC5151]",
+    cardShadow: "shadow-xs hover:shadow-md",
+  },
+  default: {
+    cardBg: "bg-white",
+    borderColor: "border-[#E3E8F0] hover:border-slate-300",
+    topStripe: "from-slate-400 via-slate-300 to-slate-200",
+    labelColor: "text-[#728096]",
+    valueColor: "text-[#172A45]",
+    iconBg: "bg-slate-50",
+    iconText: "text-slate-600",
+    iconBorder: "border-slate-200",
+    footerBorder: "border-slate-100",
+    footerText: "text-[#728096]",
+    dotBg: "bg-slate-400",
+    cardShadow: "shadow-xs hover:shadow-md",
   },
 };
 
@@ -174,27 +179,19 @@ export function MetricCard({
       : trend?.direction === "up";
   const trendText = trend?.value ?? trend?.label;
   const formattedValue = typeof value === "number" ? value.toLocaleString() : value;
-  const accent = toneGlassStyles[tone] ?? toneGlassStyles.default;
+  const accent = toneStyles[tone] ?? toneStyles.default;
 
   return (
     <div
       onClick={onClick}
-      className={`relative overflow-hidden rounded-2xl backdrop-blur-xl border ${accent.cardBg} ${accent.borderColor} ${accent.cardShadow} hover:shadow-2xl transition-all duration-300 flex flex-col justify-between group ${
-        onClick ? "cursor-pointer hover:-translate-y-1" : ""
+      className={`relative overflow-hidden rounded-2xl border ${accent.cardBg} ${accent.borderColor} ${accent.cardShadow} transition-all duration-200 flex flex-col justify-between group ${
+        onClick ? "cursor-pointer hover:-translate-y-0.5" : ""
       } ${className}`}
     >
-      {/* Glass Top Specular Light Highlight */}
-      <div className={`h-[2px] w-full bg-gradient-to-r ${accent.topLight}`} />
+      {/* Top Accent Stripe */}
+      <div className={`h-1 w-full bg-gradient-to-r ${accent.topStripe}`} />
 
-      {/* Glass Surface Gloss Sheen Overlay */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/20 via-white/5 to-transparent rounded-2xl" />
-
-      {/* Ambient glowing glass orb */}
-      <div
-        className={`pointer-events-none absolute -right-6 -bottom-6 w-32 h-32 rounded-full blur-2xl opacity-40 group-hover:opacity-65 transition-opacity duration-300 ${accent.orbBg}`}
-      />
-
-      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between relative z-10">
+      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
         <div>
           <div className="flex items-center justify-between gap-3">
             <p className={`text-[11px] font-bold uppercase tracking-wider truncate ${accent.labelColor}`} title={label}>
@@ -202,7 +199,7 @@ export function MetricCard({
             </p>
             {icon && (
               <div
-                className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 border transition-transform duration-300 group-hover:scale-105 ${accent.iconBg} ${accent.iconText} ${accent.iconBorder} [&>svg]:text-white [&>svg]:stroke-[2.25]`}
+                className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 border transition-transform duration-200 group-hover:scale-105 ${accent.iconBg} ${accent.iconText} ${accent.iconBorder}`}
               >
                 {icon}
               </div>
@@ -215,10 +212,10 @@ export function MetricCard({
             </span>
             {trendText && (
               <span
-                className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full backdrop-blur-md ${
+                className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${
                   isPositive
-                    ? "bg-white/20 text-white border border-white/30"
-                    : "bg-black/20 text-white border border-white/20"
+                    ? "bg-emerald-50 text-[#1AA879] border border-emerald-200"
+                    : "bg-rose-50 text-[#DC5151] border border-rose-200"
                 }`}
               >
                 {isPositive ? "↑" : "↓"} {trendText}
@@ -239,4 +236,3 @@ export function MetricCard({
     </div>
   );
 }
-
