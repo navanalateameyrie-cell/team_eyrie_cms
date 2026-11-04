@@ -21,7 +21,7 @@ interface GlassStyle {
   cardBg: string;
   borderColor: string;
   orbBg: string;
-  topBar: string;
+  topLight: string;
   labelColor: string;
   valueColor: string;
   iconBg: string;
@@ -30,120 +30,129 @@ interface GlassStyle {
   footerBorder: string;
   footerText: string;
   dotBg: string;
+  cardShadow: string;
 }
 
 const toneGlassStyles: Record<string, GlassStyle> = {
   brand: {
-    cardBg: "bg-gradient-to-br from-blue-500/[0.08] via-white/85 to-indigo-500/[0.06]",
-    borderColor: "border-blue-200/80 hover:border-blue-400/90",
-    orbBg: "bg-gradient-to-br from-blue-400 to-indigo-500",
-    topBar: "from-blue-600 via-indigo-600 to-blue-500",
-    labelColor: "text-blue-900/85",
-    valueColor: "text-blue-950",
-    iconBg: "bg-white/80 backdrop-blur-md shadow-[0_2px_10px_rgba(37,99,235,0.12)]",
-    iconText: "text-blue-600",
-    iconBorder: "border-blue-200/80",
-    footerBorder: "border-blue-100/80",
-    footerText: "text-blue-950/70",
-    dotBg: "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]",
+    cardBg: "bg-gradient-to-br from-[#1e40af] via-[#2563eb] to-[#1e1b4b]",
+    borderColor: "border-white/25 hover:border-white/45",
+    orbBg: "bg-blue-300/30",
+    topLight: "from-white/50 via-white/25 to-transparent",
+    labelColor: "text-blue-100",
+    valueColor: "text-white",
+    iconBg: "bg-white/20 backdrop-blur-md shadow-inner",
+    iconText: "text-white",
+    iconBorder: "border-white/30",
+    footerBorder: "border-white/20",
+    footerText: "text-blue-100/90",
+    dotBg: "bg-cyan-300 shadow-[0_0_8px_rgba(103,232,249,0.9)]",
+    cardShadow: "shadow-[0_12px_28px_-6px_rgba(37,99,235,0.45),inset_0_1px_1px_0_rgba(255,255,255,0.35)]",
   },
   info: {
-    cardBg: "bg-gradient-to-br from-sky-500/[0.08] via-white/85 to-cyan-500/[0.06]",
-    borderColor: "border-sky-200/80 hover:border-sky-400/90",
-    orbBg: "bg-gradient-to-br from-sky-400 to-cyan-500",
-    topBar: "from-sky-500 via-blue-500 to-cyan-400",
-    labelColor: "text-sky-900/85",
-    valueColor: "text-sky-950",
-    iconBg: "bg-white/80 backdrop-blur-md shadow-[0_2px_10px_rgba(2,132,199,0.12)]",
-    iconText: "text-sky-600",
-    iconBorder: "border-sky-200/80",
-    footerBorder: "border-sky-100/80",
-    footerText: "text-sky-950/70",
-    dotBg: "bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.6)]",
+    cardBg: "bg-gradient-to-br from-[#0284c7] via-[#0ea5e9] to-[#0369a1]",
+    borderColor: "border-white/25 hover:border-white/45",
+    orbBg: "bg-cyan-300/30",
+    topLight: "from-white/50 via-white/25 to-transparent",
+    labelColor: "text-sky-100",
+    valueColor: "text-white",
+    iconBg: "bg-white/20 backdrop-blur-md shadow-inner",
+    iconText: "text-white",
+    iconBorder: "border-white/30",
+    footerBorder: "border-white/20",
+    footerText: "text-sky-100/90",
+    dotBg: "bg-white shadow-[0_0_8px_rgba(255,255,255,0.9)]",
+    cardShadow: "shadow-[0_12px_28px_-6px_rgba(2,132,199,0.45),inset_0_1px_1px_0_rgba(255,255,255,0.35)]",
   },
   warning: {
-    cardBg: "bg-gradient-to-br from-amber-500/[0.09] via-white/85 to-orange-500/[0.06]",
-    borderColor: "border-amber-200/80 hover:border-amber-400/90",
-    orbBg: "bg-gradient-to-br from-amber-400 to-orange-500",
-    topBar: "from-amber-500 via-orange-500 to-amber-400",
-    labelColor: "text-amber-900/85",
-    valueColor: "text-amber-950",
-    iconBg: "bg-white/80 backdrop-blur-md shadow-[0_2px_10px_rgba(217,119,6,0.12)]",
-    iconText: "text-amber-600",
-    iconBorder: "border-amber-200/80",
-    footerBorder: "border-amber-100/80",
-    footerText: "text-amber-950/70",
-    dotBg: "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]",
+    cardBg: "bg-gradient-to-br from-[#d97706] via-[#ea580c] to-[#b45309]",
+    borderColor: "border-white/25 hover:border-white/45",
+    orbBg: "bg-yellow-300/30",
+    topLight: "from-white/50 via-white/25 to-transparent",
+    labelColor: "text-amber-100",
+    valueColor: "text-white",
+    iconBg: "bg-white/20 backdrop-blur-md shadow-inner",
+    iconText: "text-white",
+    iconBorder: "border-white/30",
+    footerBorder: "border-white/20",
+    footerText: "text-amber-100/90",
+    dotBg: "bg-yellow-200 shadow-[0_0_8px_rgba(254,240,138,0.9)]",
+    cardShadow: "shadow-[0_12px_28px_-6px_rgba(234,88,12,0.45),inset_0_1px_1px_0_rgba(255,255,255,0.35)]",
   },
   purple: {
-    cardBg: "bg-gradient-to-br from-purple-500/[0.08] via-white/85 to-indigo-500/[0.06]",
-    borderColor: "border-purple-200/80 hover:border-purple-400/90",
-    orbBg: "bg-gradient-to-br from-purple-400 to-indigo-500",
-    topBar: "from-purple-600 via-indigo-600 to-purple-500",
-    labelColor: "text-purple-900/85",
-    valueColor: "text-purple-950",
-    iconBg: "bg-white/80 backdrop-blur-md shadow-[0_2px_10px_rgba(147,51,234,0.12)]",
-    iconText: "text-purple-600",
-    iconBorder: "border-purple-200/80",
-    footerBorder: "border-purple-100/80",
-    footerText: "text-purple-950/70",
-    dotBg: "bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.6)]",
+    cardBg: "bg-gradient-to-br from-[#7c3aed] via-[#6366f1] to-[#4338ca]",
+    borderColor: "border-white/25 hover:border-white/45",
+    orbBg: "bg-fuchsia-300/30",
+    topLight: "from-white/50 via-white/25 to-transparent",
+    labelColor: "text-purple-100",
+    valueColor: "text-white",
+    iconBg: "bg-white/20 backdrop-blur-md shadow-inner",
+    iconText: "text-white",
+    iconBorder: "border-white/30",
+    footerBorder: "border-white/20",
+    footerText: "text-purple-100/90",
+    dotBg: "bg-pink-300 shadow-[0_0_8px_rgba(244,114,182,0.9)]",
+    cardShadow: "shadow-[0_12px_28px_-6px_rgba(124,58,237,0.45),inset_0_1px_1px_0_rgba(255,255,255,0.35)]",
   },
   default: {
-    cardBg: "bg-gradient-to-br from-indigo-500/[0.08] via-white/85 to-purple-500/[0.06]",
-    borderColor: "border-indigo-200/80 hover:border-indigo-400/90",
-    orbBg: "bg-gradient-to-br from-indigo-400 to-purple-500",
-    topBar: "from-indigo-600 via-purple-600 to-indigo-500",
-    labelColor: "text-indigo-900/85",
-    valueColor: "text-indigo-950",
-    iconBg: "bg-white/80 backdrop-blur-md shadow-[0_2px_10px_rgba(99,102,241,0.12)]",
-    iconText: "text-indigo-600",
-    iconBorder: "border-indigo-200/80",
-    footerBorder: "border-indigo-100/80",
-    footerText: "text-indigo-950/70",
-    dotBg: "bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]",
+    cardBg: "bg-gradient-to-br from-[#6366f1] via-[#4f46e5] to-[#312e81]",
+    borderColor: "border-white/25 hover:border-white/45",
+    orbBg: "bg-indigo-300/30",
+    topLight: "from-white/50 via-white/25 to-transparent",
+    labelColor: "text-indigo-100",
+    valueColor: "text-white",
+    iconBg: "bg-white/20 backdrop-blur-md shadow-inner",
+    iconText: "text-white",
+    iconBorder: "border-white/30",
+    footerBorder: "border-white/20",
+    footerText: "text-indigo-100/90",
+    dotBg: "bg-indigo-200 shadow-[0_0_8px_rgba(199,210,254,0.9)]",
+    cardShadow: "shadow-[0_12px_28px_-6px_rgba(99,102,241,0.45),inset_0_1px_1px_0_rgba(255,255,255,0.35)]",
   },
   success: {
-    cardBg: "bg-gradient-to-br from-emerald-500/[0.08] via-white/85 to-teal-500/[0.06]",
-    borderColor: "border-emerald-200/80 hover:border-emerald-400/90",
-    orbBg: "bg-gradient-to-br from-emerald-400 to-teal-500",
-    topBar: "from-emerald-600 via-teal-600 to-emerald-500",
-    labelColor: "text-emerald-900/85",
-    valueColor: "text-emerald-950",
-    iconBg: "bg-white/80 backdrop-blur-md shadow-[0_2px_10px_rgba(16,185,129,0.12)]",
-    iconText: "text-emerald-600",
-    iconBorder: "border-emerald-200/80",
-    footerBorder: "border-emerald-100/80",
-    footerText: "text-emerald-950/70",
-    dotBg: "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]",
+    cardBg: "bg-gradient-to-br from-[#059669] via-[#0d9488] to-[#065f46]",
+    borderColor: "border-white/25 hover:border-white/45",
+    orbBg: "bg-emerald-300/30",
+    topLight: "from-white/50 via-white/25 to-transparent",
+    labelColor: "text-emerald-100",
+    valueColor: "text-white",
+    iconBg: "bg-white/20 backdrop-blur-md shadow-inner",
+    iconText: "text-white",
+    iconBorder: "border-white/30",
+    footerBorder: "border-white/20",
+    footerText: "text-emerald-100/90",
+    dotBg: "bg-emerald-200 shadow-[0_0_8px_rgba(167,243,208,0.9)]",
+    cardShadow: "shadow-[0_12px_28px_-6px_rgba(13,148,136,0.45),inset_0_1px_1px_0_rgba(255,255,255,0.35)]",
   },
   gold: {
-    cardBg: "bg-gradient-to-br from-amber-500/[0.1] via-white/85 to-yellow-500/[0.06]",
-    borderColor: "border-amber-300/80 hover:border-amber-400",
-    orbBg: "bg-gradient-to-br from-amber-400 to-yellow-500",
-    topBar: "from-amber-600 via-yellow-500 to-amber-400",
-    labelColor: "text-amber-900/85",
-    valueColor: "text-amber-950",
-    iconBg: "bg-white/80 backdrop-blur-md shadow-[0_2px_10px_rgba(217,119,6,0.15)]",
-    iconText: "text-amber-700",
-    iconBorder: "border-amber-300/80",
-    footerBorder: "border-amber-200/70",
-    footerText: "text-amber-950/70",
-    dotBg: "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]",
+    cardBg: "bg-gradient-to-br from-[#b45309] via-[#d97706] to-[#78350f]",
+    borderColor: "border-white/25 hover:border-white/45",
+    orbBg: "bg-amber-300/30",
+    topLight: "from-white/50 via-white/25 to-transparent",
+    labelColor: "text-amber-100",
+    valueColor: "text-white",
+    iconBg: "bg-white/20 backdrop-blur-md shadow-inner",
+    iconText: "text-white",
+    iconBorder: "border-white/30",
+    footerBorder: "border-white/20",
+    footerText: "text-amber-100/90",
+    dotBg: "bg-yellow-200 shadow-[0_0_8px_rgba(254,240,138,0.9)]",
+    cardShadow: "shadow-[0_12px_28px_-6px_rgba(217,119,6,0.45),inset_0_1px_1px_0_rgba(255,255,255,0.35)]",
   },
   danger: {
-    cardBg: "bg-gradient-to-br from-rose-500/[0.08] via-white/85 to-red-500/[0.06]",
-    borderColor: "border-rose-200/80 hover:border-rose-400/90",
-    orbBg: "bg-gradient-to-br from-rose-400 to-red-500",
-    topBar: "from-rose-600 via-red-600 to-rose-500",
-    labelColor: "text-rose-900/85",
-    valueColor: "text-rose-950",
-    iconBg: "bg-white/80 backdrop-blur-md shadow-[0_2px_10px_rgba(225,29,72,0.12)]",
-    iconText: "text-rose-600",
-    iconBorder: "border-rose-200/80",
-    footerBorder: "border-rose-100/80",
-    footerText: "text-rose-950/70",
-    dotBg: "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]",
+    cardBg: "bg-gradient-to-br from-[#e11d48] via-[#dc2626] to-[#991b1b]",
+    borderColor: "border-white/25 hover:border-white/45",
+    orbBg: "bg-rose-300/30",
+    topLight: "from-white/50 via-white/25 to-transparent",
+    labelColor: "text-rose-100",
+    valueColor: "text-white",
+    iconBg: "bg-white/20 backdrop-blur-md shadow-inner",
+    iconText: "text-white",
+    iconBorder: "border-white/30",
+    footerBorder: "border-white/20",
+    footerText: "text-rose-100/90",
+    dotBg: "bg-rose-200 shadow-[0_0_8px_rgba(254,205,211,0.9)]",
+    cardShadow: "shadow-[0_12px_28px_-6px_rgba(225,29,72,0.45),inset_0_1px_1px_0_rgba(255,255,255,0.35)]",
   },
 };
 
@@ -170,17 +179,20 @@ export function MetricCard({
   return (
     <div
       onClick={onClick}
-      className={`relative overflow-hidden rounded-2xl backdrop-blur-xl border ${accent.cardBg} ${accent.borderColor} shadow-[0_8px_30px_rgb(0,0,0,0.04),inset_0_1px_1px_0_rgba(255,255,255,0.9)] hover:shadow-lg transition-all duration-300 flex flex-col justify-between group ${
+      className={`relative overflow-hidden rounded-2xl backdrop-blur-xl border ${accent.cardBg} ${accent.borderColor} ${accent.cardShadow} hover:shadow-2xl transition-all duration-300 flex flex-col justify-between group ${
         onClick ? "cursor-pointer hover:-translate-y-1" : ""
       } ${className}`}
     >
+      {/* Glass Top Specular Light Highlight */}
+      <div className={`h-[2px] w-full bg-gradient-to-r ${accent.topLight}`} />
+
+      {/* Glass Surface Gloss Sheen Overlay */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/20 via-white/5 to-transparent rounded-2xl" />
+
       {/* Ambient glowing glass orb */}
       <div
-        className={`pointer-events-none absolute -right-6 -top-6 w-28 h-28 rounded-full blur-2xl opacity-35 group-hover:opacity-60 transition-opacity duration-300 ${accent.orbBg}`}
+        className={`pointer-events-none absolute -right-6 -bottom-6 w-32 h-32 rounded-full blur-2xl opacity-40 group-hover:opacity-65 transition-opacity duration-300 ${accent.orbBg}`}
       />
-
-      {/* Top accent gradient stripe */}
-      <div className={`h-1.5 w-full bg-gradient-to-r ${accent.topBar}`} />
 
       <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between relative z-10">
         <div>
@@ -190,7 +202,7 @@ export function MetricCard({
             </p>
             {icon && (
               <div
-                className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 border transition-transform duration-300 group-hover:scale-105 ${accent.iconBg} ${accent.iconText} ${accent.iconBorder}`}
+                className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 border transition-transform duration-300 group-hover:scale-105 ${accent.iconBg} ${accent.iconText} ${accent.iconBorder} [&>svg]:text-white [&>svg]:stroke-[2.25]`}
               >
                 {icon}
               </div>
@@ -205,8 +217,8 @@ export function MetricCard({
               <span
                 className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full backdrop-blur-md ${
                   isPositive
-                    ? "bg-emerald-500/15 text-emerald-800 border border-emerald-300/60"
-                    : "bg-rose-500/15 text-rose-800 border border-rose-300/60"
+                    ? "bg-white/20 text-white border border-white/30"
+                    : "bg-black/20 text-white border border-white/20"
                 }`}
               >
                 {isPositive ? "↑" : "↓"} {trendText}
