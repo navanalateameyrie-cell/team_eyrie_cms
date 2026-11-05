@@ -40,6 +40,18 @@ public class RbacController : ControllerBase
 
     public record PermissionMetaDto(string Id, string Name, string Description, string Group);
 
+    public record SpecialPermDto(string Id, string Name, string Description);
+
+    public record RbacModuleDto(
+        string Key,
+        string Name,
+        string Group,
+        string? MenuPerm,
+        string? CreatePerm,
+        string? UpdatePerm,
+        string? DeletePerm,
+        SpecialPermDto[] SpecialPerms);
+
     public record RoleDto(
         Guid Id,
         string Name,
@@ -88,8 +100,112 @@ public class RbacController : ControllerBase
         [Required, MinLength(8)] string NewPassword);
 
     // ==========================================
-    // 1. PERMISSION CATALOG
+    // 1. PERMISSION CATALOG & MODULE MATRIX DEFINITIONS
     // ==========================================
+
+    [HttpGet("modules")]
+    [HasPermission(Permissions.Users.Manage)]
+    public ActionResult<IReadOnlyList<RbacModuleDto>> GetModules()
+    {
+        var modules = new List<RbacModuleDto>
+        {
+            new("clients", "Clients Directory & Profiles", "Client Management",
+                Permissions.Clients.Read,
+                Permissions.Clients.Create,
+                Permissions.Clients.Update,
+                Permissions.Clients.Delete,
+                Array.Empty<SpecialPermDto>()),
+
+            new("compliance", "Compliance Calendar & Obligations", "Operations & Compliance",
+                Permissions.Compliance.Read,
+                Permissions.Compliance.Create,
+                Permissions.Compliance.Update,
+                Permissions.Compliance.Delete,
+                Array.Empty<SpecialPermDto>()),
+
+            new("timesheet", "Timesheets & Hours Logging", "Operations & Compliance",
+                Permissions.Timesheet.Read,
+                Permissions.Timesheet.Create,
+                Permissions.Timesheet.Update,
+                null,
+                new[] { new SpecialPermDto(Permissions.Timesheet.Approve, "Approve Timesheets", "Authorize staff timesheet submissions") }),
+
+            new("staff_workload", "Staff Capacity & Allocations", "Operations & Compliance",
+                Permissions.Staff.Read,
+                Permissions.Staff.Create,
+                Permissions.Staff.Update,
+                Permissions.Staff.Delete,
+                Array.Empty<SpecialPermDto>()),
+
+            new("letters", "Letter & Notice Templates", "Operations & Compliance",
+                Permissions.Letters.Read,
+                Permissions.Letters.Create,
+                Permissions.Letters.Update,
+                Permissions.Letters.Delete,
+                Array.Empty<SpecialPermDto>()),
+
+            new("billing", "Invoices, Receipts & Ledger", "Billing & Finance",
+                Permissions.Billing.Read,
+                Permissions.Billing.Create,
+                Permissions.Billing.Update,
+                Permissions.Billing.Delete,
+                Array.Empty<SpecialPermDto>()),
+
+            new("tds", "TDS Receivables & Certificates", "Billing & Finance",
+                Permissions.Tds.Read,
+                Permissions.Tds.Create,
+                Permissions.Tds.Update,
+                null,
+                Array.Empty<SpecialPermDto>()),
+
+            new("documents", "Document Repository & Files", "Document Management",
+                Permissions.Documents.Read,
+                Permissions.Documents.Create,
+                Permissions.Documents.Update,
+                Permissions.Documents.Delete,
+                new[] { new SpecialPermDto(Permissions.Documents.Approve, "Approve Documents", "Sign-off on client audit dossiers") }),
+
+            new("masters", "Reference Data & Masters", "Practice Administration",
+                Permissions.Masters.Read,
+                Permissions.Masters.Create,
+                Permissions.Masters.Update,
+                Permissions.Masters.Delete,
+                Array.Empty<SpecialPermDto>()),
+
+            new("imports_exports", "Data Imports & Exports", "Data Management",
+                Permissions.Imports.Read,
+                Permissions.Imports.Create,
+                Permissions.Imports.Write,
+                null,
+                new[] { new SpecialPermDto(Permissions.Exports.Perform, "Export Data", "Download Excel, CSV, and summary reports") }),
+
+            new("reports", "Reports & Analytics", "Analytics & Reporting",
+                Permissions.Reports.Read,
+                null, null, null,
+                Array.Empty<SpecialPermDto>()),
+
+            new("audit", "Audit Activity Explorer", "Analytics & Reporting",
+                Permissions.Audit.Read,
+                null, null, null,
+                Array.Empty<SpecialPermDto>()),
+
+            new("settings", "Practice Configuration & Gateways", "Practice Administration",
+                Permissions.SettingsPerms.Read,
+                null,
+                Permissions.SettingsPerms.Manage,
+                null,
+                Array.Empty<SpecialPermDto>()),
+
+            new("rbac", "User Accounts & Role Permissions (RBAC)", "System Security",
+                Permissions.Users.Manage,
+                Permissions.Users.Manage,
+                Permissions.Users.Manage,
+                Permissions.Users.Manage,
+                new[] { new SpecialPermDto(Permissions.AdminFull, "SuperAdmin Full Access", "Root master administrative control") }),
+        };
+
+        return Ok(modules);
+    }
 
     [HttpGet("permissions")]
     [HasPermission(Permissions.Users.Manage)]
@@ -97,54 +213,86 @@ public class RbacController : ControllerBase
     {
         var catalog = new List<PermissionMetaDto>
         {
-            // Practice Overview & Clients
-            new(Permissions.Clients.Read, "View Clients", "Browse client directory, view entity profiles and contacts", "Client Management"),
-            new(Permissions.Clients.Write, "Manage Clients", "Create, edit, and deactivate client entities and branches", "Client Management"),
+            // Clients
+            new(Permissions.Clients.Read, "View Clients", "Menu and view access to client directory", "Client Management"),
+            new(Permissions.Clients.Create, "Create Client", "Add new clients and branches", "Client Management"),
+            new(Permissions.Clients.Update, "Update Client", "Edit client profiles and details", "Client Management"),
+            new(Permissions.Clients.Delete, "Delete Client", "Deactivate client records", "Client Management"),
+            new(Permissions.Clients.Write, "Manage Clients", "Full write control over client directory", "Client Management"),
 
             // Operations & Compliance
-            new(Permissions.Compliance.Read, "View Compliance", "Access compliance obligations calendar and statutory deadlines", "Operations & Compliance"),
-            new(Permissions.Compliance.Write, "Update Compliance", "File compliance returns, update status, and manage tasks", "Operations & Compliance"),
-            new(Permissions.Timesheet.Read, "View Timesheets", "View time entries and tracked hours across engagements", "Operations & Compliance"),
-            new(Permissions.Timesheet.Write, "Log Timesheets", "Record daily work hours and task descriptions", "Operations & Compliance"),
-            new(Permissions.Timesheet.Approve, "Approve Timesheets", "Review and approve partner/manager timesheet submissions", "Operations & Compliance"),
-            new(Permissions.Letters.Read, "View Letter Templates", "Access engagement letter templates and communication drafts", "Operations & Compliance"),
-            new(Permissions.Letters.Write, "Manage Letter Templates", "Draft, update, and publish official letters and notices", "Operations & Compliance"),
+            new(Permissions.Compliance.Read, "View Compliance", "Access compliance obligations calendar", "Operations & Compliance"),
+            new(Permissions.Compliance.Create, "Create Compliance", "Generate compliance obligations", "Operations & Compliance"),
+            new(Permissions.Compliance.Update, "Update Compliance", "File compliance returns and update status", "Operations & Compliance"),
+            new(Permissions.Compliance.Delete, "Delete Compliance", "Remove obsolete compliance obligations", "Operations & Compliance"),
+            new(Permissions.Compliance.Write, "Manage Compliance", "Full compliance write permissions", "Operations & Compliance"),
+
+            // Timesheets
+            new(Permissions.Timesheet.Read, "View Timesheets", "Browse timesheet entries", "Operations & Compliance"),
+            new(Permissions.Timesheet.Create, "Log Timesheet", "Record daily hours and work logs", "Operations & Compliance"),
+            new(Permissions.Timesheet.Update, "Edit Timesheet", "Modify timesheet entries", "Operations & Compliance"),
+            new(Permissions.Timesheet.Approve, "Approve Timesheets", "Authorize manager/staff timesheet logs", "Operations & Compliance"),
+            new(Permissions.Timesheet.Write, "Manage Timesheets", "Full timesheet editing permissions", "Operations & Compliance"),
 
             // Staff & Workload
-            new(Permissions.Staff.Read, "View Staff & Workload", "View staff directory, workload capacity, and allocations", "Staff Management"),
+            new(Permissions.Staff.Read, "View Staff & Workload", "View staff directory and capacity", "Staff Management"),
+            new(Permissions.Staff.Create, "Create Staff", "Add new staff profiles", "Staff Management"),
+            new(Permissions.Staff.Update, "Update Staff", "Edit staff profiles and designations", "Staff Management"),
+            new(Permissions.Staff.Delete, "Delete Staff", "Deactivate staff members", "Staff Management"),
 
-            // Billing & Finance
-            new(Permissions.Billing.Read, "View Invoices & Billing", "Browse invoices, payments, credit notes, and ledgers", "Billing & Finance"),
-            new(Permissions.Billing.Write, "Manage Billing", "Create and issue invoices, credit notes, and record collections", "Billing & Finance"),
-            new(Permissions.Tds.Read, "View TDS Ledgers", "View TDS receivables, 26AS matching, and certificates", "Billing & Finance"),
-            new(Permissions.Tds.Write, "Manage TDS Ledgers", "Update TDS deductions, upload quarterly records and claims", "Billing & Finance"),
+            // Letters
+            new(Permissions.Letters.Read, "View Letter Templates", "Browse letter templates", "Operations & Compliance"),
+            new(Permissions.Letters.Create, "Create Template", "Draft new letters and notices", "Operations & Compliance"),
+            new(Permissions.Letters.Update, "Update Template", "Edit letter text and placeholders", "Operations & Compliance"),
+            new(Permissions.Letters.Delete, "Delete Template", "Remove letter templates", "Operations & Compliance"),
+            new(Permissions.Letters.Write, "Manage Templates", "Full letter template control", "Operations & Compliance"),
+
+            // Billing
+            new(Permissions.Billing.Read, "View Billing & Invoices", "Browse invoices and ledgers", "Billing & Finance"),
+            new(Permissions.Billing.Create, "Create Invoice", "Draft and issue client invoices", "Billing & Finance"),
+            new(Permissions.Billing.Update, "Update Invoice", "Edit draft invoices and credit notes", "Billing & Finance"),
+            new(Permissions.Billing.Delete, "Delete Invoice", "Cancel invoices and delete drafts", "Billing & Finance"),
+            new(Permissions.Billing.Write, "Manage Billing", "Full billing and payment control", "Billing & Finance"),
+
+            // TDS
+            new(Permissions.Tds.Read, "View TDS Ledgers", "View TDS deductions and receivables", "Billing & Finance"),
+            new(Permissions.Tds.Create, "Create TDS", "Record quarterly TDS entries", "Billing & Finance"),
+            new(Permissions.Tds.Update, "Update TDS", "Update TDS certificates and matching", "Billing & Finance"),
+            new(Permissions.Tds.Write, "Manage TDS", "Full TDS ledger control", "Billing & Finance"),
 
             // Documents
-            new(Permissions.Documents.Read, "View Documents", "Access client documents, tax proofs, and workpapers", "Document Repository"),
-            new(Permissions.Documents.Write, "Upload Documents", "Upload client files, KYC documents, and working sheets", "Document Repository"),
-            new(Permissions.Documents.Delete, "Delete Documents", "Remove superseded or obsolete practice documents", "Document Repository"),
-            new(Permissions.Documents.Approve, "Approve Documents", "Formally approve client tax audits and sign-off dossiers", "Document Repository"),
+            new(Permissions.Documents.Read, "View Documents", "Access client document files", "Document Repository"),
+            new(Permissions.Documents.Create, "Upload Document", "Upload KYC and tax documents", "Document Repository"),
+            new(Permissions.Documents.Update, "Update Document", "Replace or version document files", "Document Repository"),
+            new(Permissions.Documents.Delete, "Delete Document", "Remove obsolete documents", "Document Repository"),
+            new(Permissions.Documents.Approve, "Approve Document", "Formal sign-off on tax audit files", "Document Repository"),
+            new(Permissions.Documents.Write, "Manage Documents", "Full document control", "Document Repository"),
 
-            // Masters & Administration
-            new(Permissions.Masters.Read, "View Masters", "Read service catalogs, entity types, states, and client groups", "Reference Data"),
-            new(Permissions.Masters.Write, "Manage Masters", "Create and edit reference masters and configuration tables", "Reference Data"),
+            // Masters
+            new(Permissions.Masters.Read, "View Masters", "View services, states, entity types", "Reference Data"),
+            new(Permissions.Masters.Create, "Create Master", "Add new master records", "Reference Data"),
+            new(Permissions.Masters.Update, "Update Master", "Edit master data particulars", "Reference Data"),
+            new(Permissions.Masters.Delete, "Delete Master", "Deactivate master entries", "Reference Data"),
+            new(Permissions.Masters.Write, "Manage Masters", "Full master data control", "Reference Data"),
 
             // Imports & Exports
-            new(Permissions.Imports.Read, "View Data Imports", "Inspect past client staging batches and import logs", "Data Integration"),
-            new(Permissions.Imports.Write, "Execute Data Imports", "Upload Excel/JSON files for bulk client data ingestion", "Data Integration"),
-            new(Permissions.Exports.Perform, "Export Practice Data", "Download Excel, CSV, and summary reports", "Data Integration"),
+            new(Permissions.Imports.Read, "View Data Imports", "Inspect import batches and logs", "Data Integration"),
+            new(Permissions.Imports.Create, "Upload Import Batch", "Upload Excel/JSON data batches", "Data Integration"),
+            new(Permissions.Imports.Write, "Execute Data Imports", "Commit imported data into practice database", "Data Integration"),
+            new(Permissions.Exports.Perform, "Export Practice Data", "Download Excel, CSV, and reports", "Data Integration"),
 
-            // Reporting & Audit
-            new(Permissions.Reports.Read, "Access Reports", "Generate practice revenue, realization, and compliance reports", "Analytics & Reporting"),
-            new(Permissions.Audit.Read, "Audit Explorer", "Search immutable audit logs and change histories", "Analytics & Reporting"),
-            new(Permissions.Email.Read, "View Email Outbox", "Inspect system-generated emails and notification history", "Communication"),
-            new(Permissions.Email.Send, "Send Practice Emails", "Trigger manual or automated client reminders and invoices", "Communication"),
+            // Reports & Audit
+            new(Permissions.Reports.Read, "View Reports", "Access practice reports and revenue charts", "Analytics & Reporting"),
+            new(Permissions.Audit.Read, "View Audit Log", "Inspect immutable audit trails", "Analytics & Reporting"),
+            new(Permissions.Email.Read, "View Email Outbox", "Inspect sent system emails", "Communication"),
+            new(Permissions.Email.Send, "Send Practice Emails", "Trigger manual client emails", "Communication"),
 
-            // Administration & Security
-            new(Permissions.SettingsPerms.Manage, "Manage Practice Settings", "Update firm particulars, bank accounts, SMTP, and integrations", "Administration"),
-            new(Permissions.Users.Manage, "Manage Users & RBAC", "Create users, configure roles, and assign security permissions", "Administration"),
-            new(Permissions.Portal.Access, "Client Portal Access", "Granted to external portal users to view their account files", "External Access"),
-            new(Permissions.AdminFull, "Full System SuperAdmin", "Unrestricted master administrative access over entire platform", "System Security"),
+            // Settings & RBAC
+            new(Permissions.SettingsPerms.Read, "View Practice Settings", "View firm particulars and integrations", "Administration"),
+            new(Permissions.SettingsPerms.Manage, "Manage Practice Settings", "Update configuration, bank, SMTP, DSC", "Administration"),
+            new(Permissions.Users.Manage, "Manage Roles & Users", "Create roles and assign permissions (Admin Only)", "Administration"),
+            new(Permissions.Portal.Access, "Client Portal Access", "External access for portal clients", "External Access"),
+            new(Permissions.AdminFull, "SuperAdmin Full Access", "Root master administrator privileges", "System Security"),
         };
 
         return Ok(catalog);

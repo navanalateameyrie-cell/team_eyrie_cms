@@ -14,6 +14,18 @@ vi.mock("../../auth/AuthContext", () => ({
 
 vi.mock("../../api/rbac", () => ({
   rbacApi: {
+    getModules: vi.fn().mockResolvedValue([
+      {
+        key: "clients",
+        name: "Clients Directory & Profiles",
+        group: "Client Management",
+        menuPerm: "clients.read",
+        createPerm: "clients.create",
+        updatePerm: "clients.update",
+        deletePerm: "clients.delete",
+        specialPerms: [],
+      },
+    ]),
     getPermissions: vi.fn().mockResolvedValue([
       { id: "clients.read", name: "View Clients", description: "Browse client directory", group: "Client Management" },
       { id: "clients.write", name: "Manage Clients", description: "Create and edit clients", group: "Client Management" },
@@ -82,11 +94,11 @@ describe("RbacPage", () => {
       expect(screen.getByText("Role-Based Access Control (RBAC)")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Role Permission Matrix")).toBeInTheDocument();
+    expect(screen.getByText(/Role Permission Matrix/i)).toBeInTheDocument();
     expect(screen.getByText(/User Accounts & Assignments/i)).toBeInTheDocument();
     expect(screen.getByText("My Effective Access")).toBeInTheDocument();
     expect(screen.getAllByText("Manager").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("StaffUser")).toBeInTheDocument();
-    expect(screen.getByText("Client Management")).toBeInTheDocument();
+    expect(screen.getByText("Clients Directory & Profiles")).toBeInTheDocument();
   });
 });

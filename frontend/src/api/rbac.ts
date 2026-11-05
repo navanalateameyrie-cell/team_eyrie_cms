@@ -7,6 +7,23 @@ export interface PermissionMetaDto {
   group: string;
 }
 
+export interface SpecialPermDto {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface RbacModuleDto {
+  key: string;
+  name: string;
+  group: string;
+  menuPerm: string | null;
+  createPerm: string | null;
+  updatePerm: string | null;
+  deletePerm: string | null;
+  specialPerms: SpecialPermDto[];
+}
+
 export interface RoleDto {
   id: string;
   name: string;
@@ -59,6 +76,8 @@ export interface UpdateUserStatusRequest {
 }
 
 export const rbacApi = {
+  getModules: () => apiFetch<RbacModuleDto[]>("/api/v1/rbac/modules"),
+
   getPermissions: () => apiFetch<PermissionMetaDto[]>("/api/v1/rbac/permissions"),
   
   getRoles: () => apiFetch<RoleDto[]>("/api/v1/rbac/roles"),

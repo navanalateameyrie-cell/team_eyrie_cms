@@ -230,9 +230,8 @@ export default function SettingsPage() {
 
 function metaText<T>(dto: SettingDto<T>) {
   if (!dto.updatedAtUtc) return "Default values · not yet saved";
-  return `Last modified: ${new Date(dto.updatedAtUtc).toLocaleString()}${
-    dto.updatedByUserName ? ` by ${dto.updatedByUserName}` : ""
-  }`;
+  return `Last modified: ${new Date(dto.updatedAtUtc).toLocaleString()}${dto.updatedByUserName ? ` by ${dto.updatedByUserName}` : ""
+    }`;
 }
 
 function FirmProfileCard({

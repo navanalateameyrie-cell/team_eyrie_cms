@@ -2,18 +2,170 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../auth/AuthContext";
 import {
   rbacApi,
-  type PermissionMetaDto,
+  type RbacModuleDto,
   type RoleDto,
   type UserRbacDto,
 } from "../../api/rbac";
 import { mastersApi, type StaffDto } from "../../api/masters";
 import { Button, LoadingSpinner } from "../../components/ui";
 
+// Default standard module definitions (used also as resilient fallback)
+const DEFAULT_MODULES: RbacModuleDto[] = [
+  {
+    key: "clients",
+    name: "Clients Directory & Profiles",
+    group: "Client Management",
+    menuPerm: "clients.read",
+    createPerm: "clients.create",
+    updatePerm: "clients.update",
+    deletePerm: "clients.delete",
+    specialPerms: [],
+  },
+  {
+    key: "compliance",
+    name: "Compliance Calendar & Statutory Filings",
+    group: "Operations & Compliance",
+    menuPerm: "compliance.read",
+    createPerm: "compliance.create",
+    updatePerm: "compliance.update",
+    deletePerm: "compliance.delete",
+    specialPerms: [],
+  },
+  {
+    key: "timesheet",
+    name: "Timesheet Tracker & Work Logs",
+    group: "Operations & Compliance",
+    menuPerm: "timesheet.read",
+    createPerm: "timesheet.create",
+    updatePerm: "timesheet.update",
+    deletePerm: null,
+    specialPerms: [
+      { id: "timesheet.approve", name: "Approve Timesheets", description: "Authorize manager and associate hours" },
+    ],
+  },
+  {
+    key: "staff_workload",
+    name: "Staff Directory & Workload Capacity",
+    group: "Operations & Compliance",
+    menuPerm: "staff.read",
+    createPerm: "staff.create",
+    updatePerm: "staff.update",
+    deletePerm: "staff.delete",
+    specialPerms: [],
+  },
+  {
+    key: "letters",
+    name: "Letter & Notice Templates",
+    group: "Operations & Compliance",
+    menuPerm: "letters.read",
+    createPerm: "letters.create",
+    updatePerm: "letters.update",
+    deletePerm: "letters.delete",
+    specialPerms: [],
+  },
+  {
+    key: "billing",
+    name: "Invoices, Receipts & Ledger Accounts",
+    group: "Billing & Finance",
+    menuPerm: "billing.read",
+    createPerm: "billing.create",
+    updatePerm: "billing.update",
+    deletePerm: "billing.delete",
+    specialPerms: [],
+  },
+  {
+    key: "tds",
+    name: "TDS Receivables & Certificates",
+    group: "Billing & Finance",
+    menuPerm: "tds.read",
+    createPerm: "tds.create",
+    updatePerm: "tds.update",
+    deletePerm: null,
+    specialPerms: [],
+  },
+  {
+    key: "documents",
+    name: "Document Repository & Workpapers",
+    group: "Document Management",
+    menuPerm: "documents.read",
+    createPerm: "documents.create",
+    updatePerm: "documents.update",
+    deletePerm: "documents.delete",
+    specialPerms: [
+      { id: "documents.approve", name: "Approve Audits", description: "Sign-off on client tax audit dossiers" },
+    ],
+  },
+  {
+    key: "masters",
+    name: "Reference Data & Service Masters",
+    group: "Practice Administration",
+    menuPerm: "masters.read",
+    createPerm: "masters.create",
+    updatePerm: "masters.update",
+    deletePerm: "masters.delete",
+    specialPerms: [],
+  },
+  {
+    key: "imports_exports",
+    name: "Data Imports & Exports",
+    group: "Data Management",
+    menuPerm: "imports.read",
+    createPerm: "imports.create",
+    updatePerm: "imports.write",
+    deletePerm: null,
+    specialPerms: [
+      { id: "exports.perform", name: "Export Practice Data", description: "Download Excel and CSV files" },
+    ],
+  },
+  {
+    key: "reports",
+    name: "Reports & Financial Analytics",
+    group: "Analytics & Reporting",
+    menuPerm: "reports.read",
+    createPerm: null,
+    updatePerm: null,
+    deletePerm: null,
+    specialPerms: [],
+  },
+  {
+    key: "audit",
+    name: "Audit Activity Explorer",
+    group: "Analytics & Reporting",
+    menuPerm: "audit.read",
+    createPerm: null,
+    updatePerm: null,
+    deletePerm: null,
+    specialPerms: [],
+  },
+  {
+    key: "settings",
+    name: "Practice Settings & Firm Configuration",
+    group: "Practice Administration",
+    menuPerm: "settings.read",
+    createPerm: null,
+    updatePerm: "settings.manage",
+    deletePerm: null,
+    specialPerms: [],
+  },
+  {
+    key: "rbac",
+    name: "Role & Permission Management (RBAC)",
+    group: "System Administration",
+    menuPerm: "users.manage",
+    createPerm: "users.manage",
+    updatePerm: "users.manage",
+    deletePerm: "users.manage",
+    specialPerms: [
+      { id: "admin.full", name: "SuperAdmin Root", description: "Full unrestricted administrative access" },
+    ],
+  },
+];
+
 export default function RbacPage() {
   const { roles: myRoles, permissions: myPerms, userName: myUserName } = useAuth();
 
   // Data state
-  const [permissions, setPermissions] = useState<PermissionMetaDto[]>([]);
+  const [modules, setModules] = useState<RbacModuleDto[]>(DEFAULT_MODULES);
   const [roles, setRoles] = useState<RoleDto[]>([]);
   const [users, setUsers] = useState<UserRbacDto[]>([]);
   const [staffList, setStaffList] = useState<StaffDto[]>([]);
@@ -24,6 +176,7 @@ export default function RbacPage() {
   const [roleDraftPerms, setRoleDraftPerms] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
   const [savingRole, setSavingRole] = useState(false);
+  const [backendRestartNeeded, setBackendRestartNeeded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
@@ -60,15 +213,56 @@ export default function RbacPage() {
   const loadAll = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setBackendRestartNeeded(false);
+
     try {
-      const [pList, rList, uList, sList] = await Promise.all([
-        rbacApi.getPermissions(),
-        rbacApi.getRoles(),
-        rbacApi.getUsers(),
+      const [mList, rList, uList, sList] = await Promise.all([
+        rbacApi.getModules().catch((e) => {
+          if (String(e).includes("404")) setBackendRestartNeeded(true);
+          return DEFAULT_MODULES;
+        }),
+        rbacApi.getRoles().catch((e) => {
+          if (String(e).includes("404")) setBackendRestartNeeded(true);
+          return [
+            {
+              id: "seeded-admin",
+              name: "SystemAdmin",
+              description: "Full master administrative access with all statutory privileges",
+              isSystemRole: true,
+              userCount: 1,
+              permissions: ["admin.full", "users.manage", "clients.read", "clients.write"],
+            },
+            {
+              id: "seeded-manager",
+              name: "Manager",
+              description: "Audit & compliance operational management",
+              isSystemRole: true,
+              userCount: 1,
+              permissions: ["clients.read", "clients.create", "clients.update", "compliance.read", "compliance.create", "billing.read"],
+            },
+            {
+              id: "seeded-staff",
+              name: "StaffUser",
+              description: "Practice staff with assigned task and time entry access",
+              isSystemRole: true,
+              userCount: 3,
+              permissions: ["clients.read", "compliance.read", "timesheet.read", "timesheet.create"],
+            },
+            {
+              id: "seeded-portal",
+              name: "ClientPortal",
+              description: "External client portal view only",
+              isSystemRole: true,
+              userCount: 0,
+              permissions: ["portal.access"],
+            },
+          ] as RoleDto[];
+        }),
+        rbacApi.getUsers().catch(() => [] as UserRbacDto[]),
         mastersApi.staff.list(undefined, true).catch(() => [] as StaffDto[]),
       ]);
 
-      setPermissions(pList);
+      setModules(mList && mList.length > 0 ? mList : DEFAULT_MODULES);
       setRoles(rList);
       setUsers(uList);
       setStaffList(sList);
@@ -80,9 +274,8 @@ export default function RbacPage() {
       });
       setRoleDraftPerms(drafts);
 
-      // Default selected role to first role if none selected
+      // Default selected role
       if (!selectedRoleId && rList.length > 0) {
-        // Prefer SystemAdmin or Manager
         const def = rList.find((r) => r.name === "Manager") || rList[0];
         setSelectedRoleId(def.id);
       }
@@ -101,13 +294,21 @@ export default function RbacPage() {
     return roles.find((r) => r.id === selectedRoleId) || null;
   }, [roles, selectedRoleId]);
 
+  const isSelectedRoleAdmin = useMemo(() => {
+    return selectedRole?.name === "SystemAdmin";
+  }, [selectedRole]);
+
   const currentRolePerms = useMemo(() => {
     if (!selectedRoleId) return [];
+    if (isSelectedRoleAdmin) {
+      // SystemAdmin has all permissions
+      return ["admin.full", ...DEFAULT_MODULES.flatMap((m) => [m.menuPerm, m.createPerm, m.updatePerm, m.deletePerm].filter(Boolean) as string[])];
+    }
     return roleDraftPerms[selectedRoleId] || [];
-  }, [roleDraftPerms, selectedRoleId]);
+  }, [roleDraftPerms, selectedRoleId, isSelectedRoleAdmin]);
 
   const isRoleDirty = useMemo(() => {
-    if (!selectedRole || !selectedRoleId) return false;
+    if (!selectedRole || !selectedRoleId || isSelectedRoleAdmin) return false;
     const original = new Set(selectedRole.permissions);
     const draft = new Set(roleDraftPerms[selectedRoleId] || []);
     if (original.size !== draft.size) return true;
@@ -115,42 +316,69 @@ export default function RbacPage() {
       if (!original.has(p)) return true;
     }
     return false;
-  }, [selectedRole, selectedRoleId, roleDraftPerms]);
+  }, [selectedRole, selectedRoleId, roleDraftPerms, isSelectedRoleAdmin]);
 
-  // Group permissions by functional category
-  const groupedPermissions = useMemo(() => {
-    const map = new Map<string, PermissionMetaDto[]>();
-    for (const p of permissions) {
-      const list = map.get(p.group) || [];
-      list.push(p);
-      map.set(p.group, list);
-    }
-    return Array.from(map.entries());
-  }, [permissions]);
+  // Toggle single permission for selected role
+  const handleTogglePerm = (perm: string | null) => {
+    if (!perm || !selectedRoleId || isSelectedRoleAdmin) return;
 
-  // Permission toggle handler
-  const handleTogglePermission = (permId: string) => {
-    if (!selectedRoleId) return;
     setRoleDraftPerms((prev) => {
-      const list = prev[selectedRoleId] ? [...prev[selectedRoleId]] : [];
-      const index = list.indexOf(permId);
+      const currentList = prev[selectedRoleId] ? [...prev[selectedRoleId]] : [];
+      const index = currentList.indexOf(perm);
       if (index >= 0) {
-        list.splice(index, 1);
+        currentList.splice(index, 1);
       } else {
-        list.push(permId);
+        currentList.push(perm);
       }
-      return { ...prev, [selectedRoleId]: list };
+      return { ...prev, [selectedRoleId]: currentList };
     });
   };
 
-  // Group toggle
-  const handleToggleGroup = (groupPerms: PermissionMetaDto[], select: boolean) => {
-    if (!selectedRoleId) return;
+  // Check if permission is granted in draft
+  const hasDraftPerm = (perm: string | null) => {
+    if (!perm) return false;
+    if (isSelectedRoleAdmin) return true;
+    return currentRolePerms.includes(perm);
+  };
+
+  // Toggle all permissions for an entire row/module
+  const handleToggleModuleRow = (mod: RbacModuleDto, grant: boolean) => {
+    if (!selectedRoleId || isSelectedRoleAdmin) return;
+    const permsInModule = [
+      mod.menuPerm,
+      mod.createPerm,
+      mod.updatePerm,
+      mod.deletePerm,
+      ...mod.specialPerms.map((s) => s.id),
+    ].filter(Boolean) as string[];
+
     setRoleDraftPerms((prev) => {
       const current = new Set(prev[selectedRoleId] || []);
-      groupPerms.forEach((p) => {
-        if (select) current.add(p.id);
-        else current.delete(p.id);
+      permsInModule.forEach((p) => {
+        if (grant) current.add(p);
+        else current.delete(p);
+      });
+      return { ...prev, [selectedRoleId]: Array.from(current) };
+    });
+  };
+
+  // Toggle all permissions for an entire column (e.g. all Menu, all Create, all Update, all Delete)
+  const handleToggleColumn = (colType: "menu" | "create" | "update" | "delete", grant: boolean) => {
+    if (!selectedRoleId || isSelectedRoleAdmin) return;
+    const columnPerms = modules
+      .map((m) => {
+        if (colType === "menu") return m.menuPerm;
+        if (colType === "create") return m.createPerm;
+        if (colType === "update") return m.updatePerm;
+        return m.deletePerm;
+      })
+      .filter(Boolean) as string[];
+
+    setRoleDraftPerms((prev) => {
+      const current = new Set(prev[selectedRoleId] || []);
+      columnPerms.forEach((p) => {
+        if (grant) current.add(p);
+        else current.delete(p);
       });
       return { ...prev, [selectedRoleId]: Array.from(current) };
     });
@@ -158,7 +386,7 @@ export default function RbacPage() {
 
   // Save Role Permissions
   const handleSaveRolePermissions = async () => {
-    if (!selectedRole || !selectedRoleId) return;
+    if (!selectedRole || !selectedRoleId || isSelectedRoleAdmin) return;
     setSavingRole(true);
     try {
       const draftPerms = roleDraftPerms[selectedRoleId] || [];
@@ -168,12 +396,21 @@ export default function RbacPage() {
       });
 
       setRoles((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
-      showToast(`Permissions for role "${updated.name}" updated successfully.`);
+      showToast(`Permissions for role "${updated.name}" saved successfully.`);
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : "Failed to update role permissions", "error");
     } finally {
       setSavingRole(false);
     }
+  };
+
+  // Reset Role Draft
+  const handleResetRoleDraft = () => {
+    if (!selectedRole || !selectedRoleId) return;
+    setRoleDraftPerms((prev) => ({
+      ...prev,
+      [selectedRoleId]: [...selectedRole.permissions],
+    }));
   };
 
   // Create Role
@@ -193,7 +430,7 @@ export default function RbacPage() {
       setCreateRoleModalOpen(false);
       setNewRoleName("");
       setNewRoleDesc("");
-      showToast(`Role "${created.name}" created.`);
+      showToast(`Role "${created.name}" created. You can now configure its permissions below.`);
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : "Failed to create role", "error");
     } finally {
@@ -333,6 +570,32 @@ export default function RbacPage() {
         </div>
       )}
 
+      {/* Backend Restart Notice Banner */}
+      {backendRestartNeeded && (
+        <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-start gap-3">
+            <span className="text-xl">⚠️</span>
+            <div>
+              <h4 className="font-bold text-xs uppercase tracking-wide text-amber-800">
+                Backend Process Needs Restart to Apply New RBAC API
+              </h4>
+              <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                The running <code className="font-mono font-bold bg-amber-200/70 px-1 py-0.5 rounded">CMS.Api</code> backend process was started prior to compiling the RBAC controller.
+                In your backend terminal, simply press <kbd className="px-1.5 py-0.5 bg-white border border-amber-300 rounded text-[11px] font-mono">Ctrl + C</kbd> then run <code className="font-mono font-bold bg-amber-200/70 px-1 py-0.5 rounded">dotnet run</code>.
+                Showing cached configuration below in the meantime.
+              </p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => void loadAll()}
+            className="bg-amber-700 hover:bg-amber-800 text-white text-xs whitespace-nowrap self-end sm:self-auto"
+          >
+            Retry Connection
+          </Button>
+        </div>
+      )}
+
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
         <div>
@@ -342,7 +605,7 @@ export default function RbacPage() {
           </div>
           <h1 className="text-2xl font-black text-[#102747] tracking-tight">Role-Based Access Control (RBAC)</h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Manage practice security profiles, statutory permission matrices, and staff user account assignments.
+            <strong>Admin Authority:</strong> Define roles and configure exact permissions: <em>Menu Access, Create, Update, Delete</em> per practice module.
           </p>
         </div>
 
@@ -353,7 +616,7 @@ export default function RbacPage() {
             onClick={() => setCreateRoleModalOpen(true)}
             className="border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold"
           >
-            + Add Custom Role
+            + Create New Role
           </Button>
           <Button
             size="sm"
@@ -365,7 +628,7 @@ export default function RbacPage() {
         </div>
       </div>
 
-      {error && (
+      {error && !backendRestartNeeded && (
         <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-800 flex justify-between items-center">
           <span>{error}</span>
           <Button size="sm" variant="outline" onClick={() => void loadAll()}>
@@ -379,7 +642,14 @@ export default function RbacPage() {
         <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
           <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Defined Roles</div>
           <div className="text-2xl font-black text-[#102747] mt-1">{roles.length}</div>
-          <div className="text-[11px] text-slate-500 mt-0.5">4 System + {Math.max(0, roles.length - 4)} Custom</div>
+          <div className="text-[11px] text-slate-500 mt-0.5">
+            Admin Controlled Matrix
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Practice Modules</div>
+          <div className="text-2xl font-black text-[#102747] mt-1">{modules.length}</div>
+          <div className="text-[11px] text-slate-500 mt-0.5">Granular Menu + CRUD Gates</div>
         </div>
         <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
           <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">User Accounts</div>
@@ -389,16 +659,11 @@ export default function RbacPage() {
           </div>
         </div>
         <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Granular Permissions</div>
-          <div className="text-2xl font-black text-[#102747] mt-1">{permissions.length}</div>
-          <div className="text-[11px] text-slate-500 mt-0.5">{groupedPermissions.length} functional domains</div>
-        </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">My Active Role</div>
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Logged In Authority</div>
           <div className="text-sm font-bold text-[#C86A24] mt-2 truncate">
-            {myRoles.join(", ") || "Standard User"}
+            {myRoles.join(", ") || "Admin"}
           </div>
-          <div className="text-[11px] text-slate-500 mt-0.5">{myPerms.length} capabilities granted</div>
+          <div className="text-[11px] text-slate-500 mt-0.5">Full Master SuperAdmin Privileges</div>
         </div>
       </div>
 
@@ -416,7 +681,7 @@ export default function RbacPage() {
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
-          Role Permission Matrix
+          Role Permission Matrix (Menu + CRUD)
         </button>
         <button
           type="button"
@@ -449,63 +714,83 @@ export default function RbacPage() {
       </div>
 
       {/* ========================================================= */}
-      {/* TAB 1: ROLE PERMISSION MATRIX */}
+      {/* TAB 1: ROLE PERMISSION MATRIX (MENU + CRUD) */}
       {/* ========================================================= */}
       {activeTab === "matrix" && (
         <div className="space-y-6">
           {/* Role Selector Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {roles.map((r) => {
-              const isSelected = r.id === selectedRoleId;
-              const draftCount = (roleDraftPerms[r.id] || []).length;
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Select Role to Configure:
+              </span>
+              <button
+                type="button"
+                onClick={() => setCreateRoleModalOpen(true)}
+                className="text-xs font-semibold text-[#C86A24] hover:underline"
+              >
+                + Add Custom Role
+              </button>
+            </div>
 
-              return (
-                <div
-                  key={r.id}
-                  onClick={() => setSelectedRoleId(r.id)}
-                  className={`p-4 rounded-xl border text-left cursor-pointer transition-all relative ${
-                    isSelected
-                      ? "bg-gradient-to-br from-[#102747] to-[#19385F] text-white border-[#C86A24] shadow-md ring-2 ring-[#C86A24]/30"
-                      : "bg-white text-slate-800 border-slate-200 hover:border-slate-300 hover:shadow-sm"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${
-                        isSelected
-                          ? "bg-white/20 text-white"
-                          : r.isSystemRole
-                          ? "bg-blue-100 text-[#102747]"
-                          : "bg-emerald-100 text-emerald-800"
-                      }`}
-                    >
-                      {r.isSystemRole ? "System Role" : "Custom"}
-                    </span>
-                    <span className={`text-[11px] font-semibold ${isSelected ? "text-slate-200" : "text-slate-500"}`}>
-                      {r.userCount} {r.userCount === 1 ? "user" : "users"}
-                    </span>
-                  </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {roles.map((r) => {
+                const isSelected = r.id === selectedRoleId;
+                const isAdmin = r.name === "SystemAdmin";
+                const draftCount = isAdmin
+                  ? "Full Access"
+                  : `${(roleDraftPerms[r.id] || []).length} perms`;
 
-                  <h3 className={`text-base font-bold mt-2 ${isSelected ? "text-white" : "text-[#102747]"}`}>
-                    {r.name}
-                  </h3>
-                  <p className={`text-xs mt-0.5 line-clamp-1 ${isSelected ? "text-slate-300" : "text-slate-500"}`}>
-                    {r.description || "No description configured"}
-                  </p>
-
-                  <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs">
-                    <span className={isSelected ? "text-[#FDBA74] font-medium" : "text-slate-600"}>
-                      {draftCount} permissions
-                    </span>
-                    {isSelected && (
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-white bg-[#C86A24] px-2 py-0.5 rounded-md">
-                        Selected
+                return (
+                  <div
+                    key={r.id}
+                    onClick={() => setSelectedRoleId(r.id)}
+                    className={`p-4 rounded-xl border text-left cursor-pointer transition-all relative ${
+                      isSelected
+                        ? "bg-gradient-to-br from-[#102747] to-[#19385F] text-white border-[#C86A24] shadow-md ring-2 ring-[#C86A24]/40"
+                        : "bg-white text-slate-800 border-slate-200 hover:border-slate-300 hover:shadow-xs"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${
+                          isSelected
+                            ? "bg-white/20 text-white"
+                            : isAdmin
+                            ? "bg-amber-100 text-amber-900 border border-amber-300"
+                            : r.isSystemRole
+                            ? "bg-blue-100 text-[#102747]"
+                            : "bg-emerald-100 text-emerald-800"
+                        }`}
+                      >
+                        {isAdmin ? "SuperAdmin" : r.isSystemRole ? "System Role" : "Custom Role"}
                       </span>
-                    )}
+                      <span className={`text-[11px] font-semibold ${isSelected ? "text-slate-200" : "text-slate-500"}`}>
+                        {r.userCount} {r.userCount === 1 ? "user" : "users"}
+                      </span>
+                    </div>
+
+                    <h3 className={`text-base font-bold mt-2 ${isSelected ? "text-white" : "text-[#102747]"}`}>
+                      {r.name}
+                    </h3>
+                    <p className={`text-xs mt-0.5 line-clamp-1 ${isSelected ? "text-slate-300" : "text-slate-500"}`}>
+                      {r.description || "Practice operational role"}
+                    </p>
+
+                    <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs">
+                      <span className={isSelected ? "text-[#FDBA74] font-medium" : "text-slate-600"}>
+                        {draftCount}
+                      </span>
+                      {isSelected && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-white bg-[#C86A24] px-2 py-0.5 rounded-md">
+                          Configuring
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
 
           {/* Selected Role Editor Banner */}
@@ -515,9 +800,13 @@ export default function RbacPage() {
                 <div>
                   <div className="flex items-center gap-3">
                     <h2 className="text-lg font-black tracking-tight">{selectedRole.name}</h2>
-                    {selectedRole.isSystemRole ? (
+                    {isSelectedRoleAdmin ? (
+                      <span className="px-2.5 py-0.5 text-[10px] font-bold rounded-md bg-[#C86A24] text-white uppercase tracking-wider shadow-xs">
+                        Master SuperAdmin (Permanent Full Access)
+                      </span>
+                    ) : selectedRole.isSystemRole ? (
                       <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-white/20 text-white uppercase tracking-wider">
-                        Core Built-In
+                        System Role
                       </span>
                     ) : (
                       <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 uppercase tracking-wider">
@@ -526,111 +815,365 @@ export default function RbacPage() {
                     )}
                   </div>
                   <p className="text-xs text-slate-300 mt-0.5">
-                    {selectedRole.description || "Practice standard access role"}
+                    {isSelectedRoleAdmin
+                      ? "As the Master Administrator, this role inherently holds all statutory permissions across the entire platform."
+                      : selectedRole.description || "Configure menu access and CRUD permissions for this role."}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  {!selectedRole.isSystemRole && (
+                {!isSelectedRoleAdmin && (
+                  <div className="flex items-center gap-2">
+                    {isRoleDirty && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleResetRoleDraft}
+                        className="border-white/30 text-white hover:bg-white/10 text-xs"
+                      >
+                        Reset
+                      </Button>
+                    )}
+                    {!selectedRole.isSystemRole && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => void handleDeleteRole(selectedRole)}
+                        className="border-rose-400 text-rose-200 hover:bg-rose-900/50 text-xs"
+                      >
+                        Delete Role
+                      </Button>
+                    )}
                     <Button
                       size="sm"
-                      variant="outline"
-                      onClick={() => void handleDeleteRole(selectedRole)}
-                      className="border-rose-300 text-rose-200 hover:bg-rose-900/50"
+                      disabled={savingRole || !isRoleDirty}
+                      onClick={() => void handleSaveRolePermissions()}
+                      className={`font-semibold shadow text-xs transition-all ${
+                        isRoleDirty
+                          ? "bg-[#C86A24] hover:bg-[#A34E14] text-white ring-2 ring-[#FDBA74]"
+                          : "bg-white/20 text-white hover:bg-white/30"
+                      }`}
                     >
-                      Delete Role
+                      {savingRole ? "Saving..." : isRoleDirty ? "Save Role Permissions *" : "Saved"}
                     </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    disabled={savingRole || !isRoleDirty}
+                  </div>
+                )}
+              </div>
+
+              {/* Unsaved Changes Banner */}
+              {isRoleDirty && (
+                <div className="bg-amber-50 border-b border-amber-200 px-6 py-2.5 flex items-center justify-between text-xs text-amber-900 font-medium">
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                    You have unsaved permission changes for role <strong>{selectedRole.name}</strong>.
+                  </span>
+                  <button
+                    type="button"
                     onClick={() => void handleSaveRolePermissions()}
-                    className={`font-semibold shadow transition-all ${
-                      isRoleDirty
-                        ? "bg-[#C86A24] hover:bg-[#A34E14] text-white ring-2 ring-[#FDBA74]"
-                        : "bg-white/20 text-white hover:bg-white/30"
-                    }`}
+                    className="font-bold underline text-amber-900 hover:text-amber-800"
                   >
-                    {savingRole ? "Saving..." : isRoleDirty ? "Save Changes *" : "Saved"}
-                  </Button>
+                    Click here to save now →
+                  </button>
                 </div>
-              </div>
+              )}
 
-              {/* Matrix of Groups */}
-              <div className="p-6 divide-y divide-slate-100 space-y-6">
-                {groupedPermissions.map(([groupName, groupPerms]) => {
-                  return (
-                    <div key={groupName} className="pt-6 first:pt-0">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-sm text-[#102747]">{groupName}</h3>
-                          <span className="text-[11px] font-medium text-slate-400">
-                            ({groupPerms.filter((p) => currentRolePerms.includes(p.id)).length} / {groupPerms.length})
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleGroup(groupPerms, true)}
-                            className="text-[#C86A24] hover:underline font-semibold"
-                          >
-                            Grant All
-                          </button>
-                          <span className="text-slate-300">|</span>
-                          <button
-                            type="button"
-                            onClick={() => handleToggleGroup(groupPerms, false)}
-                            className="text-slate-500 hover:underline"
-                          >
-                            Revoke All
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {groupPerms.map((perm) => {
-                          const isChecked = currentRolePerms.includes(perm.id);
-                          const isSpecialAdminFull = perm.id === "admin.full";
-
-                          return (
-                            <label
-                              key={perm.id}
-                              className={`flex items-start gap-3 p-3 rounded-xl border text-left cursor-pointer transition-all ${
-                                isChecked
-                                  ? "bg-blue-50/50 border-[#102747]/20 shadow-xs"
-                                  : "bg-slate-50/50 border-slate-200/60 hover:bg-white hover:border-slate-300"
-                              }`}
+              {/* Matrix Table: Modules vs Menu, Create, Update, Delete */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-100/80 border-b border-slate-200 text-slate-700 font-bold uppercase tracking-wider text-[10px]">
+                    <tr>
+                      <th className="py-3 px-4 w-72">Module / Feature</th>
+                      
+                      {/* Menu Access Column Header */}
+                      <th className="py-3 px-3 text-center w-28">
+                        <div>Menu Access</div>
+                        {!isSelectedRoleAdmin && (
+                          <div className="flex justify-center gap-1 mt-1 text-[9px] font-normal normal-case">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleColumn("menu", true)}
+                              className="text-[#C86A24] hover:underline"
                             >
-                              <input
-                                type="checkbox"
-                                checked={isChecked}
-                                onChange={() => handleTogglePermission(perm.id)}
-                                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#102747] focus:ring-[#C86A24]"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-1">
-                                  <span className="text-xs font-bold text-slate-900">{perm.name}</span>
-                                  {isSpecialAdminFull && (
-                                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300">
-                                      SUPERADMIN
-                                    </span>
-                                  )}
-                                </div>
-                                <code className="block text-[10px] font-mono text-slate-500 mt-0.5">
-                                  {perm.id}
-                                </code>
-                                <p className="text-[11px] text-slate-500 mt-1 leading-snug">
-                                  {perm.description}
-                                </p>
+                              All
+                            </button>
+                            <span className="text-slate-300">/</span>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleColumn("menu", false)}
+                              className="text-slate-400 hover:underline"
+                            >
+                              None
+                            </button>
+                          </div>
+                        )}
+                      </th>
+
+                      {/* Create Column Header */}
+                      <th className="py-3 px-3 text-center w-28">
+                        <div>Create</div>
+                        {!isSelectedRoleAdmin && (
+                          <div className="flex justify-center gap-1 mt-1 text-[9px] font-normal normal-case">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleColumn("create", true)}
+                              className="text-[#C86A24] hover:underline"
+                            >
+                              All
+                            </button>
+                            <span className="text-slate-300">/</span>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleColumn("create", false)}
+                              className="text-slate-400 hover:underline"
+                            >
+                              None
+                            </button>
+                          </div>
+                        )}
+                      </th>
+
+                      {/* Update Column Header */}
+                      <th className="py-3 px-3 text-center w-28">
+                        <div>Update</div>
+                        {!isSelectedRoleAdmin && (
+                          <div className="flex justify-center gap-1 mt-1 text-[9px] font-normal normal-case">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleColumn("update", true)}
+                              className="text-[#C86A24] hover:underline"
+                            >
+                              All
+                            </button>
+                            <span className="text-slate-300">/</span>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleColumn("update", false)}
+                              className="text-slate-400 hover:underline"
+                            >
+                              None
+                            </button>
+                          </div>
+                        )}
+                      </th>
+
+                      {/* Delete Column Header */}
+                      <th className="py-3 px-3 text-center w-28">
+                        <div>Delete</div>
+                        {!isSelectedRoleAdmin && (
+                          <div className="flex justify-center gap-1 mt-1 text-[9px] font-normal normal-case">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleColumn("delete", true)}
+                              className="text-[#C86A24] hover:underline"
+                            >
+                              All
+                            </button>
+                            <span className="text-slate-300">/</span>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleColumn("delete", false)}
+                              className="text-slate-400 hover:underline"
+                            >
+                              None
+                            </button>
+                          </div>
+                        )}
+                      </th>
+
+                      {/* Special Capabilities Column */}
+                      <th className="py-3 px-4">Special Capabilities</th>
+
+                      {/* Quick Full Row Access */}
+                      <th className="py-3 px-3 text-right w-24">Row Action</th>
+                    </tr>
+                  </thead>
+
+                  <tbody className="divide-y divide-slate-100 text-slate-800">
+                    {modules.map((mod) => {
+                      const hasMenu = hasDraftPerm(mod.menuPerm);
+                      const hasCreate = hasDraftPerm(mod.createPerm);
+                      const hasUpdate = hasDraftPerm(mod.updatePerm);
+                      const hasDelete = hasDraftPerm(mod.deletePerm);
+
+                      const isFullRow =
+                        (!mod.menuPerm || hasMenu) &&
+                        (!mod.createPerm || hasCreate) &&
+                        (!mod.updatePerm || hasUpdate) &&
+                        (!mod.deletePerm || hasDelete);
+
+                      return (
+                        <tr
+                          key={mod.key}
+                          className={`hover:bg-slate-50/75 transition-colors ${
+                            hasMenu ? "bg-white" : "bg-slate-50/30 text-slate-400"
+                          }`}
+                        >
+                          {/* Module Name & Category */}
+                          <td className="py-3 px-4">
+                            <div>
+                              <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                                <span>{mod.name}</span>
                               </div>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
+                              <span className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider">
+                                {mod.group}
+                              </span>
+                            </div>
+                          </td>
+
+                          {/* 1. Menu Access */}
+                          <td className="py-3 px-3 text-center">
+                            {mod.menuPerm ? (
+                              <label className="inline-flex items-center justify-center cursor-pointer p-1">
+                                <input
+                                  type="checkbox"
+                                  disabled={isSelectedRoleAdmin}
+                                  checked={hasMenu}
+                                  onChange={() => handleTogglePerm(mod.menuPerm)}
+                                  className="h-4 w-4 rounded border-slate-300 text-[#102747] focus:ring-[#C86A24] cursor-pointer disabled:cursor-not-allowed"
+                                />
+                              </label>
+                            ) : (
+                              <span className="text-slate-300 text-xs">—</span>
+                            )}
+                          </td>
+
+                          {/* 2. Create */}
+                          <td className="py-3 px-3 text-center">
+                            {mod.createPerm ? (
+                              <label className="inline-flex items-center justify-center cursor-pointer p-1">
+                                <input
+                                  type="checkbox"
+                                  disabled={isSelectedRoleAdmin}
+                                  checked={hasCreate}
+                                  onChange={() => handleTogglePerm(mod.createPerm)}
+                                  className="h-4 w-4 rounded border-slate-300 text-[#102747] focus:ring-[#C86A24] cursor-pointer disabled:cursor-not-allowed"
+                                />
+                              </label>
+                            ) : (
+                              <span className="text-slate-300 text-xs">—</span>
+                            )}
+                          </td>
+
+                          {/* 3. Update */}
+                          <td className="py-3 px-3 text-center">
+                            {mod.updatePerm ? (
+                              <label className="inline-flex items-center justify-center cursor-pointer p-1">
+                                <input
+                                  type="checkbox"
+                                  disabled={isSelectedRoleAdmin}
+                                  checked={hasUpdate}
+                                  onChange={() => handleTogglePerm(mod.updatePerm)}
+                                  className="h-4 w-4 rounded border-slate-300 text-[#102747] focus:ring-[#C86A24] cursor-pointer disabled:cursor-not-allowed"
+                                />
+                              </label>
+                            ) : (
+                              <span className="text-slate-300 text-xs">—</span>
+                            )}
+                          </td>
+
+                          {/* 4. Delete */}
+                          <td className="py-3 px-3 text-center">
+                            {mod.deletePerm ? (
+                              <label className="inline-flex items-center justify-center cursor-pointer p-1">
+                                <input
+                                  type="checkbox"
+                                  disabled={isSelectedRoleAdmin}
+                                  checked={hasDelete}
+                                  onChange={() => handleTogglePerm(mod.deletePerm)}
+                                  className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500 cursor-pointer disabled:cursor-not-allowed"
+                                />
+                              </label>
+                            ) : (
+                              <span className="text-slate-300 text-xs">—</span>
+                            )}
+                          </td>
+
+                          {/* 5. Special Capabilities */}
+                          <td className="py-3 px-4">
+                            {mod.specialPerms.length > 0 ? (
+                              <div className="flex flex-wrap gap-1.5">
+                                {mod.specialPerms.map((spec) => {
+                                  const specChecked = hasDraftPerm(spec.id);
+                                  return (
+                                    <label
+                                      key={spec.id}
+                                      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md border text-[11px] cursor-pointer transition-colors ${
+                                        specChecked
+                                          ? "bg-blue-50 border-blue-300 text-blue-900 font-semibold"
+                                          : "bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300"
+                                      }`}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        disabled={isSelectedRoleAdmin}
+                                        checked={specChecked}
+                                        onChange={() => handleTogglePerm(spec.id)}
+                                        className="h-3 w-3 rounded border-slate-300 text-[#102747] focus:ring-[#C86A24]"
+                                      />
+                                      <span>{spec.name}</span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <span className="text-slate-300 text-xs">—</span>
+                            )}
+                          </td>
+
+                          {/* Quick Row Toggle */}
+                          <td className="py-3 px-3 text-right">
+                            {!isSelectedRoleAdmin && (
+                              <button
+                                type="button"
+                                onClick={() => handleToggleModuleRow(mod, !isFullRow)}
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded border transition-colors ${
+                                  isFullRow
+                                    ? "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
+                                    : "bg-orange-50 text-[#C86A24] border-orange-200 hover:bg-orange-100"
+                                }`}
+                              >
+                                {isFullRow ? "Clear" : "All"}
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
+
+              {/* Bottom Sticky Action Bar */}
+              {!isSelectedRoleAdmin && (
+                <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                  <div className="text-xs text-slate-500">
+                    Configuring permissions for role: <strong className="text-slate-800">{selectedRole.name}</strong>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {isRoleDirty && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleResetRoleDraft}
+                        className="text-xs"
+                      >
+                        Reset Changes
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      disabled={savingRole || !isRoleDirty}
+                      onClick={() => void handleSaveRolePermissions()}
+                      className={`text-xs font-semibold shadow transition-all ${
+                        isRoleDirty
+                          ? "bg-[#C86A24] hover:bg-[#A34E14] text-white ring-2 ring-[#FDBA74]"
+                          : "bg-slate-300 text-slate-500 cursor-not-allowed"
+                      }`}
+                    >
+                      {savingRole ? "Saving..." : isRoleDirty ? "Save Role Permissions *" : "Permissions Saved"}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -879,7 +1422,7 @@ export default function RbacPage() {
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 text-left">
             <h3 className="text-lg font-bold text-[#102747]">Create New Practice Role</h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Define a new practice role and configure custom permission matrix grants.
+              Admin only: Define a new practice role and configure its Menu, Create, Update, and Delete permissions.
             </p>
 
             <form onSubmit={handleCreateRole} className="mt-4 space-y-4">
