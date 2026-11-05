@@ -99,13 +99,22 @@ export default function StaffPage() {
         onEdit={openEdit}
         onDeactivate={deactivate}
         extraActions={
-          hasPermission("staff.read") ? (
-            <Link to="/admin/staff-workload">
-              <Button variant="outline" size="sm">
-                View Workload Allocations →
-              </Button>
-            </Link>
-          ) : null
+          <div className="flex items-center gap-2">
+            {hasPermission("users.manage") ? (
+              <Link to="/admin/rbac">
+                <Button variant="outline" size="sm">
+                  User Accounts & Roles (RBAC) →
+                </Button>
+              </Link>
+            ) : null}
+            {hasPermission("staff.read") ? (
+              <Link to="/admin/staff-workload">
+                <Button variant="outline" size="sm">
+                  View Workload Allocations →
+                </Button>
+              </Link>
+            ) : null}
+          </div>
         }
         columns={[
           { header: "Code", cell: (r) => <span className="font-mono">{r.code}</span> },

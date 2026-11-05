@@ -189,6 +189,16 @@ export default function Layout() {
             </svg>
           ),
         },
+        {
+          to: "/admin/rbac",
+          label: "Roles & Permissions",
+          perm: "users.manage",
+          icon: (
+            <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          ),
+        },
       ],
     },
   ];
@@ -246,6 +256,9 @@ export default function Layout() {
     }
     if (path === "/admin/settings") {
       return [{ label: "Administration" }, { label: "Practice Settings", active: true }];
+    }
+    if (path === "/admin/rbac") {
+      return [{ label: "Administration" }, { label: "Roles & Permissions (RBAC)", active: true }];
     }
     if (path === "/admin/audit") {
       return [{ label: "Administration" }, { label: "Audit Activity Log", active: true }];

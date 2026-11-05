@@ -84,6 +84,7 @@ type SettingTab = "firm" | "mail" | "reminders" | "einvoicing" | "dsc";
 export default function SettingsPage() {
   const { hasPermission } = useAuth();
   const canReadAudit = hasPermission("audit.read");
+  const canManageUsers = hasPermission("users.manage");
   const [activeTab, setActiveTab] = useState<SettingTab>("firm");
   const [firm, setFirm] = useState<SettingDto<FirmProfile> | null>(null);
   const [mail, setMail] = useState<SettingDto<MailSettings> | null>(null);
@@ -146,13 +147,22 @@ export default function SettingsPage() {
         title="Practice & Integration Settings"
         subtitle="Manage firm identity, invoice banking particulars, SMTP gateways, GST e-invoicing, and digital signatures."
         actions={
-          canReadAudit ? (
-            <Link to="/admin/audit">
-              <Button variant="outline" size="sm">
-                View Audit Activity Log →
-              </Button>
-            </Link>
-          ) : null
+          <div className="flex items-center gap-2">
+            {canManageUsers ? (
+              <Link to="/admin/rbac">
+                <Button size="sm" className="bg-[#102747] text-white hover:bg-[#0C1E36]">
+                  Manage Roles & Access (RBAC) →
+                </Button>
+              </Link>
+            ) : null}
+            {canReadAudit ? (
+              <Link to="/admin/audit">
+                <Button variant="outline" size="sm">
+                  View Audit Activity Log →
+                </Button>
+              </Link>
+            ) : null}
+          </div>
         }
       />
 

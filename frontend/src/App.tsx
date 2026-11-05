@@ -29,6 +29,7 @@ import BillingPage from "./pages/billing/BillingPage";
 import ReconcilePage from "./pages/billing/ReconcilePage";
 import ReportsPage from "./pages/reports/ReportsPage";
 import SettingsPage from "./pages/settings/SettingsPage";
+import RbacPage from "./pages/settings/RbacPage";
 import MfaEnrolPage from "./pages/MfaEnrolPage";
 import TimesheetPage from "./pages/timesheet/TimesheetPage";
 
@@ -159,6 +160,14 @@ export default function App() {
               element={
                 <RequirePermission permission="settings.manage">
                   <SettingsPage />
+                </RequirePermission>
+              }
+            />
+            <Route
+              path="admin/rbac"
+              element={
+                <RequirePermission permission="users.manage">
+                  <RbacPage />
                 </RequirePermission>
               }
             />
