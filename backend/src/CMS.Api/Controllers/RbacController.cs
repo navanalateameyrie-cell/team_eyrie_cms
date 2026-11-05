@@ -85,6 +85,8 @@ public class RbacController : ControllerBase
 
     public record CreateUserRequest(
         [Required, EmailAddress, StringLength(256)] string Email,
+        string? FullName,
+        string? Phone,
         [StringLength(100)] string? Password,
         Guid? StaffId,
         string[]? Roles,
@@ -497,8 +499,32 @@ public class RbacController : ControllerBase
         if (await _userManager.FindByEmailAsync(normalizedEmail) is not null)
             return Conflict(new { error = "email_already_exists", message = $"User with email '{normalizedEmail}' already exists." });
 
-        if (req.StaffId.HasValue && !await _db.Staff.AnyAsync(s => s.Id == req.StaffId.Value, ct))
-            return UnprocessableEntity(new { error = "invalid_staff", message = "Referenced staff profile does not exist." });
+        Guid? linkedStaffId = req.StaffId;
+
+        if (linkedStaffId.HasValue)
+        {
+            if (!await _db.Staff.AnyAsync(s => s.Id == linkedStaffId.Value, ct))
+                return UnprocessableEntity(new { error = "invalid_staff", message = "Referenced staff profile does not exist." });
+        }
+        else
+        {
+            var existingStaff = await _db.Staff.FirstOrDefaultAsync(s => s.Email == normalizedEmail, ct);
+            if (existingStaff is not null)
+            {
+                linkedStaffId = existingStaff.Id;
+            }
+            else if (!string.IsNullOrWhiteSpace(req.FullName))
+            {
+                var newStaff = new CMS.Domain.Entities.Staff(
+                    req.FullName.Trim(),
+                    normalizedEmail,
+                    phone: req.Phone?.Trim(),
+                    role: req.Roles?.FirstOrDefault());
+                _db.Staff.Add(newStaff);
+                await _db.SaveChangesAsync(ct);
+                linkedStaffId = newStaff.Id;
+            }
+        }
 
         var password = string.IsNullOrWhiteSpace(req.Password) ? "Staff!23" : req.Password;
 
@@ -507,7 +533,7 @@ public class RbacController : ControllerBase
             UserName = normalizedEmail,
             Email = normalizedEmail,
             EmailConfirmed = true,
-            StaffId = req.StaffId,
+            StaffId = linkedStaffId,
             IsEnabled = req.IsEnabled,
             CreatedAtUtc = DateTimeOffset.UtcNow,
         };

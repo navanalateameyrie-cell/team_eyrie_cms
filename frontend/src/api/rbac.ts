@@ -61,6 +61,8 @@ export interface UserRbacDto {
 
 export interface CreateUserRequest {
   email: string;
+  fullName?: string;
+  phone?: string;
   password?: string;
   staffId?: string;
   roles?: string[];

@@ -95,7 +95,7 @@ describe("RbacPage", () => {
     });
 
     expect(screen.getByText(/Role Permission Matrix/i)).toBeInTheDocument();
-    expect(screen.getByText(/User Accounts & Assignments/i)).toBeInTheDocument();
+    expect(screen.getByText(/User Accounts & Role Mapping/i)).toBeInTheDocument();
     expect(screen.getByText("My Effective Access")).toBeInTheDocument();
     expect(screen.getAllByText("Manager").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("StaffUser")).toBeInTheDocument();

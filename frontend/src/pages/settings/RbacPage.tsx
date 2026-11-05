@@ -184,23 +184,30 @@ export default function RbacPage() {
   const [userSearch, setUserSearch] = useState("");
   const [userRoleFilter, setUserRoleFilter] = useState("all");
 
-  // Modals
+  // Modals: Create Role
   const [createRoleModalOpen, setCreateRoleModalOpen] = useState(false);
   const [newRoleName, setNewRoleName] = useState("");
   const [newRoleDesc, setNewRoleDesc] = useState("");
   const [creatingRole, setCreatingRole] = useState(false);
 
+  // Modals: Create User & Map Role
   const [createUserModalOpen, setCreateUserModalOpen] = useState(false);
+  const [userProvisionMode, setUserProvisionMode] = useState<"existing" | "new">("existing");
+  const [newUserFullName, setNewUserFullName] = useState("");
+  const [newUserPhone, setNewUserPhone] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");
-  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("Staff!23");
   const [newUserStaffId, setNewUserStaffId] = useState("");
-  const [newUserRoles, setNewUserRoles] = useState<string[]>(["StaffUser"]);
+  const [newUserRole, setNewUserRole] = useState("StaffUser");
+  const [showPassword, setShowPassword] = useState(false);
   const [creatingUser, setCreatingUser] = useState(false);
 
+  // Modals: Edit User Roles
   const [editRolesModalUser, setEditRolesModalUser] = useState<UserRbacDto | null>(null);
   const [editUserRoles, setEditUserRoles] = useState<string[]>([]);
   const [updatingUserRoles, setUpdatingUserRoles] = useState(false);
 
+  // Modals: Reset Password
   const [resetPwdModalUser, setResetPwdModalUser] = useState<UserRbacDto | null>(null);
   const [newResetPassword, setNewResetPassword] = useState("");
   const [resettingPwd, setResettingPwd] = useState(false);
@@ -290,6 +297,13 @@ export default function RbacPage() {
     void loadAll();
   }, []);
 
+  // Unmapped staff (in staff directory but without an active user login)
+  const unmappedStaff = useMemo(() => {
+    const mappedStaffIds = new Set(users.map((u) => u.staffId).filter(Boolean));
+    const mappedEmails = new Set(users.map((u) => u.email.toLowerCase()));
+    return staffList.filter((s) => !mappedStaffIds.has(s.id) && !mappedEmails.has(s.email.toLowerCase()));
+  }, [staffList, users]);
+
   const selectedRole = useMemo(() => {
     return roles.find((r) => r.id === selectedRoleId) || null;
   }, [roles, selectedRoleId]);
@@ -301,7 +315,6 @@ export default function RbacPage() {
   const currentRolePerms = useMemo(() => {
     if (!selectedRoleId) return [];
     if (isSelectedRoleAdmin) {
-      // SystemAdmin has all permissions
       return ["admin.full", ...DEFAULT_MODULES.flatMap((m) => [m.menuPerm, m.createPerm, m.updatePerm, m.deletePerm].filter(Boolean) as string[])];
     }
     return roleDraftPerms[selectedRoleId] || [];
@@ -362,7 +375,7 @@ export default function RbacPage() {
     });
   };
 
-  // Toggle all permissions for an entire column (e.g. all Menu, all Create, all Update, all Delete)
+  // Toggle all permissions for an entire column
   const handleToggleColumn = (colType: "menu" | "create" | "update" | "delete", grant: boolean) => {
     if (!selectedRoleId || isSelectedRoleAdmin) return;
     const columnPerms = modules
@@ -453,7 +466,51 @@ export default function RbacPage() {
     }
   };
 
-  // Create User
+  // Open User Provision Modal for a specific unmapped staff
+  const handleProvisionStaff = (staff: StaffDto) => {
+    setUserProvisionMode("existing");
+    setNewUserStaffId(staff.id);
+    setNewUserEmail(staff.email);
+    setNewUserFullName(staff.fullName);
+    setNewUserPhone(staff.phone || "");
+    setNewUserPassword("Staff!23");
+    setNewUserRole(staff.role?.toLowerCase().includes("manager") ? "Manager" : "StaffUser");
+    setCreateUserModalOpen(true);
+  };
+
+  // Open clean User Provision modal
+  const handleOpenCreateUser = () => {
+    setUserProvisionMode(unmappedStaff.length > 0 ? "existing" : "new");
+    if (unmappedStaff.length > 0) {
+      const first = unmappedStaff[0];
+      setNewUserStaffId(first.id);
+      setNewUserEmail(first.email);
+      setNewUserFullName(first.fullName);
+      setNewUserPhone(first.phone || "");
+    } else {
+      setNewUserStaffId("");
+      setNewUserEmail("");
+      setNewUserFullName("");
+      setNewUserPhone("");
+    }
+    setNewUserPassword("Staff!23");
+    setNewUserRole("StaffUser");
+    setCreateUserModalOpen(true);
+  };
+
+  // Generate random password
+  const handleGeneratePassword = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%&*";
+    let pwd = "";
+    for (let i = 0; i < 10; i++) {
+      pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    pwd += "!9";
+    setNewUserPassword(pwd);
+    setShowPassword(true);
+  };
+
+  // Submit User Creation & Role Mapping
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newUserEmail.trim()) return;
@@ -461,17 +518,16 @@ export default function RbacPage() {
     try {
       const created = await rbacApi.createUser({
         email: newUserEmail.trim(),
+        fullName: userProvisionMode === "new" ? newUserFullName.trim() : undefined,
+        phone: userProvisionMode === "new" && newUserPhone.trim() ? newUserPhone.trim() : undefined,
         password: newUserPassword.trim() || undefined,
-        staffId: newUserStaffId ? newUserStaffId : undefined,
-        roles: newUserRoles,
+        staffId: userProvisionMode === "existing" && newUserStaffId ? newUserStaffId : undefined,
+        roles: [newUserRole],
       });
       setUsers((prev) => [created, ...prev]);
       setCreateUserModalOpen(false);
-      setNewUserEmail("");
-      setNewUserPassword("");
-      setNewUserStaffId("");
-      setNewUserRoles(["StaffUser"]);
-      showToast(`User account created for ${created.email}.`);
+      showToast(`User account created for ${created.email} and mapped to role "${newUserRole}".`);
+      void loadAll();
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : "Failed to create user", "error");
     } finally {
@@ -479,7 +535,7 @@ export default function RbacPage() {
     }
   };
 
-  // Update User Roles
+  // Update User Roles (Remap)
   const handleSaveUserRoles = async () => {
     if (!editRolesModalUser) return;
     setUpdatingUserRoles(true);
@@ -604,7 +660,7 @@ export default function RbacPage() {
           </div>
           <h1 className="text-2xl font-black text-[#102747] tracking-tight">Role-Based Access Control (RBAC)</h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            <strong>Admin Authority:</strong> Define roles and configure exact permissions: <em>Menu Access, Create, Update, Delete</em> per practice module.
+            <strong>Admin Authority:</strong> Only the Administrator can create roles, configure permissions (<em>Menu, Create, Update, Delete</em>), and provision users with mapped roles.
           </p>
         </div>
 
@@ -619,10 +675,10 @@ export default function RbacPage() {
           </Button>
           <Button
             size="sm"
-            onClick={() => setCreateUserModalOpen(true)}
-            className="bg-[#102747] hover:bg-[#0C1E36] text-white font-semibold shadow-sm"
+            onClick={handleOpenCreateUser}
+            className="bg-[#C86A24] hover:bg-[#A34E14] text-white font-semibold shadow-sm"
           >
-            + Create User Account
+            + Create User & Map Role
           </Button>
         </div>
       </div>
@@ -654,15 +710,15 @@ export default function RbacPage() {
           <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">User Accounts</div>
           <div className="text-2xl font-black text-[#102747] mt-1">{users.length}</div>
           <div className="text-[11px] text-emerald-600 font-semibold mt-0.5">
-            {users.filter((u) => u.isEnabled).length} active accounts
+            {users.filter((u) => u.isEnabled).length} mapped active logins
           </div>
         </div>
         <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Logged In Authority</div>
-          <div className="text-sm font-bold text-[#C86A24] mt-2 truncate">
-            {myRoles.join(", ") || "Admin"}
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Unmapped Staff</div>
+          <div className="text-2xl font-black text-[#C86A24] mt-1">{unmappedStaff.length}</div>
+          <div className="text-[11px] text-slate-500 mt-0.5">
+            Staff awaiting user account
           </div>
-          <div className="text-[11px] text-slate-500 mt-0.5">Full Master SuperAdmin Privileges</div>
         </div>
       </div>
 
@@ -692,7 +748,12 @@ export default function RbacPage() {
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
           </svg>
-          User Accounts & Assignments ({users.length})
+          User Accounts & Role Mapping ({users.length})
+          {unmappedStaff.length > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] bg-orange-100 text-[#C86A24] font-bold">
+              +{unmappedStaff.length} unmapped
+            </span>
+          )}
         </button>
         <button
           type="button"
@@ -1169,184 +1230,241 @@ export default function RbacPage() {
       )}
 
       {/* ========================================================= */}
-      {/* TAB 2: USER ACCOUNTS & ASSIGNMENTS */}
+      {/* TAB 2: USER ACCOUNTS & ROLE MAPPING */}
       {/* ========================================================= */}
       {activeTab === "users" && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          {/* Filter Bar */}
-          <div className="p-4 bg-slate-50/60 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3 flex-1">
-              <input
-                type="text"
-                placeholder="Search staff user by email, name, or code..."
-                value={userSearch}
-                onChange={(e) => setUserSearch(e.target.value)}
-                className="w-full max-w-sm px-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white shadow-xs focus:ring-1 focus:ring-[#102747] focus:outline-none"
-              />
-              <select
-                value={userRoleFilter}
-                onChange={(e) => setUserRoleFilter(e.target.value)}
-                className="px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white font-medium text-slate-700 focus:outline-none"
-              >
-                <option value="all">All Roles</option>
-                {roles.map((r) => (
-                  <option key={r.id} value={r.name}>
-                    {r.name}
-                  </option>
+        <div className="space-y-6">
+          {/* Unmapped Staff Banner */}
+          {unmappedStaff.length > 0 && (
+            <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-2xl p-5 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#C86A24] animate-pulse" />
+                  <h3 className="font-bold text-sm text-[#102747]">
+                    Practice Staff Awaiting Login Accounts ({unmappedStaff.length})
+                  </h3>
+                </div>
+                <span className="text-xs text-slate-500">
+                  Select a staff member below to provision credentials and map their role:
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                {unmappedStaff.map((staff) => (
+                  <div
+                    key={staff.id}
+                    className="p-3 rounded-xl bg-white border border-orange-100 flex items-center justify-between gap-2 shadow-xs hover:border-[#C86A24] transition-all"
+                  >
+                    <div className="min-w-0">
+                      <div className="font-bold text-xs text-slate-900 truncate">{staff.fullName}</div>
+                      <div className="text-[11px] text-slate-400 truncate">{staff.email}</div>
+                      {staff.code && (
+                        <span className="inline-block mt-0.5 px-1.5 py-0.2 rounded font-mono text-[9px] bg-slate-100 text-slate-600 border border-slate-200">
+                          {staff.code}
+                        </span>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => handleProvisionStaff(staff)}
+                      className="bg-[#102747] hover:bg-[#0C1E36] text-white text-[11px] px-2.5 py-1 shrink-0"
+                    >
+                      Map Role →
+                    </Button>
+                  </div>
                 ))}
-              </select>
+              </div>
+            </div>
+          )}
+
+          {/* User Table Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            {/* Filter Bar */}
+            <div className="p-4 bg-slate-50/60 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3 flex-1">
+                <input
+                  type="text"
+                  placeholder="Search user by email, name, or staff code..."
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  className="w-full max-w-sm px-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white shadow-xs focus:ring-1 focus:ring-[#102747] focus:outline-none"
+                />
+                <select
+                  value={userRoleFilter}
+                  onChange={(e) => setUserRoleFilter(e.target.value)}
+                  className="px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white font-medium text-slate-700 focus:outline-none"
+                >
+                  <option value="all">All Roles</option>
+                  {roles.map((r) => (
+                    <option key={r.id} value={r.name}>
+                      {r.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <Button
+                size="sm"
+                onClick={handleOpenCreateUser}
+                className="bg-[#C86A24] hover:bg-[#A34E14] text-white font-semibold"
+              >
+                + Create User & Map Role
+              </Button>
             </div>
 
-            <Button
-              size="sm"
-              onClick={() => setCreateUserModalOpen(true)}
-              className="bg-[#102747] hover:bg-[#0C1E36] text-white font-semibold"
-            >
-              + Create User
-            </Button>
-          </div>
-
-          {/* User Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-100/75 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
-                <tr>
-                  <th className="py-3 px-4">User Account</th>
-                  <th className="py-3 px-4">Linked Staff Profile</th>
-                  <th className="py-3 px-4">Assigned Roles</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Last Login</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
-                {filteredUsers.length === 0 ? (
+            {/* User Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-100/75 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-400">
-                      No user accounts found matching current search/filter.
-                    </td>
+                    <th className="py-3 px-4">User Account</th>
+                    <th className="py-3 px-4">Linked Staff Profile</th>
+                    <th className="py-3 px-4">Mapped Role(s)</th>
+                    <th className="py-3 px-4">Account Status</th>
+                    <th className="py-3 px-4">Last Login</th>
+                    <th className="py-3 px-4 text-right">Admin Actions</th>
                   </tr>
-                ) : (
-                  filteredUsers.map((u) => {
-                    const initials = u.email.substring(0, 2).toUpperCase();
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {filteredUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-slate-400">
+                        No user accounts found matching current search/filter.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredUsers.map((u) => {
+                      const initials = u.email.substring(0, 2).toUpperCase();
 
-                    return (
-                      <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="py-3.5 px-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-[#102747] text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                              {initials}
+                      return (
+                        <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-[#102747] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                                {initials}
+                              </div>
+                              <div>
+                                <div className="font-bold text-slate-900">{u.email}</div>
+                                <div className="text-[11px] text-slate-400 font-mono">ID: {u.id.substring(0, 8)}...</div>
+                              </div>
                             </div>
-                            <div>
-                              <div className="font-bold text-slate-900">{u.email}</div>
-                              <div className="text-[11px] text-slate-400 font-mono">ID: {u.id.substring(0, 8)}...</div>
-                            </div>
-                          </div>
-                        </td>
+                          </td>
 
-                        <td className="py-3.5 px-4">
-                          {u.staffName ? (
-                            <div>
-                              <span className="font-semibold text-slate-900">{u.staffName}</span>
-                              {u.staffCode && (
-                                <span className="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-100 text-slate-600 border border-slate-200">
-                                  {u.staffCode}
+                          <td className="py-3.5 px-4">
+                            {u.staffName ? (
+                              <div>
+                                <span className="font-semibold text-slate-900">{u.staffName}</span>
+                                {u.staffCode && (
+                                  <span className="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-100 text-slate-600 border border-slate-200">
+                                    {u.staffCode}
+                                  </span>
+                                )}
+                              </div>
+                            ) : u.clientName ? (
+                              <span className="text-slate-600">Client: {u.clientName}</span>
+                            ) : (
+                              <span className="text-slate-400 italic">Direct user (unlinked)</span>
+                            )}
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-1.5">
+                              {u.roles.map((r) => (
+                                <span
+                                  key={r}
+                                  className={`px-2 py-0.5 rounded-md font-semibold text-[10px] tracking-wide ${r === "SystemAdmin"
+                                    ? "bg-[#102747] text-white"
+                                    : r === "Manager"
+                                      ? "bg-blue-100 text-blue-900 border border-blue-200"
+                                      : r === "StaffUser"
+                                        ? "bg-orange-100 text-orange-900 border border-orange-200"
+                                        : "bg-emerald-100 text-emerald-900 border border-emerald-200"
+                                    }`}
+                                >
+                                  {r}
                                 </span>
-                              )}
+                              ))}
+                              <button
+                                type="button"
+                                title="Change role mapping"
+                                onClick={() => {
+                                  setEditRolesModalUser(u);
+                                  setEditUserRoles([...u.roles]);
+                                }}
+                                className="text-slate-400 hover:text-[#C86A24] p-0.5 rounded transition-colors"
+                              >
+                                ✎
+                              </button>
                             </div>
-                          ) : u.clientName ? (
-                            <span className="text-slate-600">Client: {u.clientName}</span>
-                          ) : (
-                            <span className="text-slate-400 italic">No linked staff</span>
-                          )}
-                        </td>
+                          </td>
 
-                        <td className="py-3.5 px-4">
-                          <div className="flex flex-wrap gap-1">
-                            {u.roles.map((r) => (
-                              <span
-                                key={r}
-                                className={`px-2 py-0.5 rounded-md font-semibold text-[10px] tracking-wide ${r === "SystemAdmin"
-                                  ? "bg-[#102747] text-white"
-                                  : r === "Manager"
-                                    ? "bg-blue-100 text-blue-900 border border-blue-200"
-                                    : r === "StaffUser"
-                                      ? "bg-orange-100 text-orange-900 border border-orange-200"
-                                      : "bg-emerald-100 text-emerald-900 border border-emerald-200"
+                          <td className="py-3.5 px-4">
+                            {u.isEnabled ? (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                Active
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                Disabled
+                              </span>
+                            )}
+                          </td>
+
+                          <td className="py-3.5 px-4 text-slate-500 text-[11px]">
+                            {u.lastLoginAtUtc
+                              ? new Date(u.lastLoginAtUtc).toLocaleDateString("en-IN", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })
+                              : "Never"}
+                          </td>
+
+                          <td className="py-3.5 px-4 text-right">
+                            <div className="inline-flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditRolesModalUser(u);
+                                  setEditUserRoles([...u.roles]);
+                                }}
+                                className="px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-300 text-slate-700 hover:bg-slate-100 transition-colors"
+                              >
+                                Map Role
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setResetPwdModalUser(u);
+                                  setNewResetPassword("");
+                                }}
+                                className="px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-300 text-slate-700 hover:bg-slate-100 transition-colors"
+                              >
+                                Reset Pwd
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => void handleToggleUserStatus(u)}
+                                className={`px-2.5 py-1 text-xs font-semibold rounded-md border transition-colors ${u.isEnabled
+                                  ? "border-rose-200 text-rose-700 hover:bg-rose-50"
+                                  : "border-emerald-200 text-emerald-700 hover:bg-emerald-50"
                                   }`}
                               >
-                                {r}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-
-                        <td className="py-3.5 px-4">
-                          {u.isEnabled ? (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                              Active
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                              Disabled
-                            </span>
-                          )}
-                        </td>
-
-                        <td className="py-3.5 px-4 text-slate-500 text-[11px]">
-                          {u.lastLoginAtUtc
-                            ? new Date(u.lastLoginAtUtc).toLocaleDateString("en-IN", {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
-                            : "Never"}
-                        </td>
-
-                        <td className="py-3.5 px-4 text-right">
-                          <div className="inline-flex items-center gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditRolesModalUser(u);
-                                setEditUserRoles([...u.roles]);
-                              }}
-                              className="px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-300 text-slate-700 hover:bg-slate-100 transition-colors"
-                            >
-                              Edit Roles
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setResetPwdModalUser(u);
-                                setNewResetPassword("");
-                              }}
-                              className="px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-300 text-slate-700 hover:bg-slate-100 transition-colors"
-                            >
-                              Reset Pwd
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => void handleToggleUserStatus(u)}
-                              className={`px-2.5 py-1 text-xs font-semibold rounded-md border transition-colors ${u.isEnabled
-                                ? "border-rose-200 text-rose-700 hover:bg-rose-50"
-                                : "border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                                }`}
-                            >
-                              {u.isEnabled ? "Disable" : "Enable"}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                                {u.isEnabled ? "Disable" : "Enable"}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -1460,91 +1578,200 @@ export default function RbacPage() {
       )}
 
       {/* ========================================================= */}
-      {/* MODAL: CREATE USER ACCOUNT */}
+      {/* MODAL: CREATE USER ACCOUNT & MAP ROLE */}
       {/* ========================================================= */}
       {createUserModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full p-6 text-left">
-            <h3 className="text-lg font-bold text-[#102747]">Create Staff User Account</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Provision login credentials and assign security roles to practice staff.
-            </p>
-
-            <form onSubmit={handleCreateUser} className="mt-4 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address *</label>
+                <h3 className="text-lg font-bold text-[#102747]">Create User & Map Role</h3>
+                <p className="text-xs text-slate-500">
+                  Provision practice login credentials and map statutory permissions.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCreateUserModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 font-bold text-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Mode Selector */}
+            <div className="flex rounded-xl bg-slate-100 p-1 my-4 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setUserProvisionMode("existing")}
+                className={`flex-1 py-1.5 rounded-lg text-center transition-all ${userProvisionMode === "existing"
+                  ? "bg-white text-[#102747] shadow-xs"
+                  : "text-slate-500 hover:text-slate-800"
+                  }`}
+              >
+                Link Existing Staff Member
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setUserProvisionMode("new");
+                  setNewUserStaffId("");
+                }}
+                className={`flex-1 py-1.5 rounded-lg text-center transition-all ${userProvisionMode === "new"
+                  ? "bg-white text-[#102747] shadow-xs"
+                  : "text-slate-500 hover:text-slate-800"
+                  }`}
+              >
+                Register New Staff Profile
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateUser} className="space-y-4">
+              {/* Option A: Link Existing Staff */}
+              {userProvisionMode === "existing" ? (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Select Staff Member *
+                  </label>
+                  <select
+                    required
+                    value={newUserStaffId}
+                    onChange={(e) => {
+                      const id = e.target.value;
+                      setNewUserStaffId(id);
+                      const found = staffList.find((s) => s.id === id);
+                      if (found) {
+                        setNewUserEmail(found.email);
+                        setNewUserFullName(found.fullName);
+                        setNewUserPhone(found.phone || "");
+                        if (found.role?.toLowerCase().includes("manager")) {
+                          setNewUserRole("Manager");
+                        }
+                      }
+                    }}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-1 focus:ring-[#102747] bg-white"
+                  >
+                    <option value="">-- Choose Staff Member --</option>
+                    {staffList.map((s) => {
+                      const alreadyMapped = users.some((u) => u.staffId === s.id);
+                      return (
+                        <option key={s.id} value={s.id}>
+                          {s.fullName} ({s.email}) {s.code ? `[${s.code}]` : ""} {alreadyMapped ? "— (Already has login)" : ""}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              ) : (
+                /* Option B: New Staff Profile */
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Ramesh Kumar"
+                      value={newUserFullName}
+                      onChange={(e) => setNewUserFullName(e.target.value)}
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-1 focus:ring-[#102747]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Contact Phone</label>
+                    <input
+                      type="text"
+                      placeholder="+91 98765 43210"
+                      value={newUserPhone}
+                      onChange={(e) => setNewUserPhone(e.target.value)}
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-1 focus:ring-[#102747]"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Email Address */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Login Email Address *</label>
                 <input
                   type="email"
                   required
-                  placeholder="staff.name@cms.local"
+                  placeholder="name@cms.local"
                   value={newUserEmail}
                   onChange={(e) => setNewUserEmail(e.target.value)}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-1 focus:ring-[#102747]"
                 />
               </div>
 
+              {/* Password */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Initial Password (Optional — defaults to <code className="font-mono text-slate-800">Staff!23</code>)
-                </label>
-                <input
-                  type="password"
-                  placeholder="Leave blank for Staff!23"
-                  value={newUserPassword}
-                  onChange={(e) => setNewUserPassword(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-1 focus:ring-[#102747]"
-                />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-slate-700">Initial Password *</label>
+                  <button
+                    type="button"
+                    onClick={handleGeneratePassword}
+                    className="text-[11px] font-semibold text-[#C86A24] hover:underline"
+                  >
+                    🎲 Generate Password
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    minLength={6}
+                    value={newUserPassword}
+                    onChange={(e) => setNewUserPassword(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-1 focus:ring-[#102747] font-mono pr-16"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2.5 top-2 text-[10px] font-bold text-slate-400 hover:text-slate-600"
+                  >
+                    {showPassword ? "HIDE" : "SHOW"}
+                  </button>
+                </div>
+                <span className="text-[10px] text-slate-400 mt-1 block">
+                  Staff member can reset this password upon signing in.
+                </span>
               </div>
 
+              {/* Role Mapping Selector */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Link to Staff Directory Profile (Optional)
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Map Role to User *
                 </label>
-                <select
-                  value={newUserStaffId}
-                  onChange={(e) => setNewUserStaffId(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-1 focus:ring-[#102747]"
-                >
-                  <option value="">-- No Linked Staff Member --</option>
-                  {staffList.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.fullName} ({s.email}) — [{s.code}]
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Assign Role(s)</label>
                 <div className="grid grid-cols-2 gap-2">
                   {roles.map((r) => {
-                    const checked = newUserRoles.includes(r.name);
+                    const isSelected = newUserRole === r.name;
                     return (
-                      <label
+                      <div
                         key={r.id}
-                        className={`flex items-center gap-2 p-2 rounded-lg border text-xs cursor-pointer ${checked ? "bg-blue-50 border-blue-300 font-semibold text-[#102747]" : "border-slate-200"
+                        onClick={() => setNewUserRole(r.name)}
+                        className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${isSelected
+                          ? "bg-blue-50/80 border-[#102747] ring-1 ring-[#102747]"
+                          : "border-slate-200 hover:bg-slate-50"
                           }`}
                       >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => {
-                            if (checked) {
-                              setNewUserRoles(newUserRoles.filter((name) => name !== r.name));
-                            } else {
-                              setNewUserRoles([...newUserRoles, r.name]);
-                            }
-                          }}
-                          className="h-3.5 w-3.5 text-[#102747]"
-                        />
-                        <span>{r.name}</span>
-                      </label>
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs text-[#102747]">{r.name}</span>
+                          <span
+                            className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${isSelected ? "border-[#102747] bg-[#102747]" : "border-slate-300"
+                              }`}
+                          >
+                            {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">
+                          {r.description || "Operational role"}
+                        </p>
+                      </div>
                     );
                   })}
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
                 <Button
                   type="button"
                   variant="outline"
@@ -1556,10 +1783,10 @@ export default function RbacPage() {
                 <Button
                   type="submit"
                   size="sm"
-                  disabled={creatingUser || !newUserEmail.trim()}
-                  className="bg-[#102747] text-white"
+                  disabled={creatingUser || !newUserEmail.trim() || !newUserPassword.trim()}
+                  className="bg-[#C86A24] hover:bg-[#A34E14] text-white font-semibold"
                 >
-                  {creatingUser ? "Creating..." : "Create Account"}
+                  {creatingUser ? "Provisioning..." : `Create User & Map to ${newUserRole}`}
                 </Button>
               </div>
             </form>
@@ -1568,14 +1795,14 @@ export default function RbacPage() {
       )}
 
       {/* ========================================================= */}
-      {/* MODAL: EDIT USER ROLES */}
+      {/* MODAL: EDIT USER ROLES (REMAP) */}
       {/* ========================================================= */}
       {editRolesModalUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 text-left">
-            <h3 className="text-lg font-bold text-[#102747]">Edit User Roles</h3>
+            <h3 className="text-lg font-bold text-[#102747]">Remap User Roles</h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Assign or revoke roles for <strong className="text-slate-800">{editRolesModalUser.email}</strong>.
+              Select roles to assign to <strong className="text-slate-800">{editRolesModalUser.email}</strong>.
             </p>
 
             <div className="mt-4 space-y-2">
@@ -1625,7 +1852,7 @@ export default function RbacPage() {
                 onClick={() => void handleSaveUserRoles()}
                 className="bg-[#102747] text-white"
               >
-                {updatingUserRoles ? "Saving..." : "Save Roles"}
+                {updatingUserRoles ? "Saving..." : "Save Role Mapping"}
               </Button>
             </div>
           </div>
