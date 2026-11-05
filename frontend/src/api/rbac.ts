@@ -79,46 +79,46 @@ export const rbacApi = {
   getModules: () => apiFetch<RbacModuleDto[]>("/api/v1/rbac/modules"),
 
   getPermissions: () => apiFetch<PermissionMetaDto[]>("/api/v1/rbac/permissions"),
-  
+
   getRoles: () => apiFetch<RoleDto[]>("/api/v1/rbac/roles"),
-  
+
   createRole: (data: CreateRoleRequest) =>
     apiFetch<RoleDto>("/api/v1/rbac/roles", {
       method: "POST",
       body: JSON.stringify(data),
     }),
-    
+
   updateRole: (roleId: string, data: UpdateRoleRequest) =>
     apiFetch<RoleDto>(`/api/v1/rbac/roles/${roleId}`, {
       method: "PUT",
       body: JSON.stringify(data),
     }),
-    
+
   deleteRole: (roleId: string) =>
     apiFetch<void>(`/api/v1/rbac/roles/${roleId}`, {
       method: "DELETE",
     }),
-    
+
   getUsers: () => apiFetch<UserRbacDto[]>("/api/v1/rbac/users"),
-  
+
   createUser: (data: CreateUserRequest) =>
     apiFetch<UserRbacDto>("/api/v1/rbac/users", {
       method: "POST",
       body: JSON.stringify(data),
     }),
-    
+
   updateUserRoles: (userId: string, data: UpdateUserRolesRequest) =>
     apiFetch<UserRbacDto>(`/api/v1/rbac/users/${userId}/roles`, {
       method: "PUT",
       body: JSON.stringify(data),
     }),
-    
+
   toggleUserStatus: (userId: string, isEnabled: boolean) =>
     apiFetch<UserRbacDto>(`/api/v1/rbac/users/${userId}/status`, {
       method: "PATCH",
       body: JSON.stringify({ isEnabled }),
     }),
-    
+
   adminResetPassword: (userId: string, newPassword: string) =>
     apiFetch<{ status: string; message: string }>(`/api/v1/rbac/users/${userId}/reset-password`, {
       method: "POST",

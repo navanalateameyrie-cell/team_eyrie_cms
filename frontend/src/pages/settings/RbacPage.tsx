@@ -559,11 +559,10 @@ export default function RbacPage() {
       {/* Toast Notification */}
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl shadow-2xl border text-sm font-semibold flex items-center gap-3 transition-all transform animate-bounce ${
-            toast.type === "success"
-              ? "bg-[#102747] text-white border-[#C86A24]"
-              : "bg-rose-900 text-white border-rose-700"
-          }`}
+          className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl shadow-2xl border text-sm font-semibold flex items-center gap-3 transition-all transform animate-bounce ${toast.type === "success"
+            ? "bg-[#102747] text-white border-[#C86A24]"
+            : "bg-rose-900 text-white border-rose-700"
+            }`}
         >
           <span>{toast.type === "success" ? "✓" : "⚠"}</span>
           <span>{toast.message}</span>
@@ -672,11 +671,10 @@ export default function RbacPage() {
         <button
           type="button"
           onClick={() => setActiveTab("matrix")}
-          className={`px-5 py-3 font-semibold text-xs border-b-2 transition-all flex items-center gap-2 ${
-            activeTab === "matrix"
-              ? "border-[#C86A24] text-[#C86A24] bg-orange-50/40 rounded-t-lg"
-              : "border-transparent text-slate-600 hover:text-slate-900"
-          }`}
+          className={`px-5 py-3 font-semibold text-xs border-b-2 transition-all flex items-center gap-2 ${activeTab === "matrix"
+            ? "border-[#C86A24] text-[#C86A24] bg-orange-50/40 rounded-t-lg"
+            : "border-transparent text-slate-600 hover:text-slate-900"
+            }`}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -686,11 +684,10 @@ export default function RbacPage() {
         <button
           type="button"
           onClick={() => setActiveTab("users")}
-          className={`px-5 py-3 font-semibold text-xs border-b-2 transition-all flex items-center gap-2 ${
-            activeTab === "users"
-              ? "border-[#C86A24] text-[#C86A24] bg-orange-50/40 rounded-t-lg"
-              : "border-transparent text-slate-600 hover:text-slate-900"
-          }`}
+          className={`px-5 py-3 font-semibold text-xs border-b-2 transition-all flex items-center gap-2 ${activeTab === "users"
+            ? "border-[#C86A24] text-[#C86A24] bg-orange-50/40 rounded-t-lg"
+            : "border-transparent text-slate-600 hover:text-slate-900"
+            }`}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -700,11 +697,10 @@ export default function RbacPage() {
         <button
           type="button"
           onClick={() => setActiveTab("self")}
-          className={`px-5 py-3 font-semibold text-xs border-b-2 transition-all flex items-center gap-2 ${
-            activeTab === "self"
-              ? "border-[#C86A24] text-[#C86A24] bg-orange-50/40 rounded-t-lg"
-              : "border-transparent text-slate-600 hover:text-slate-900"
-          }`}
+          className={`px-5 py-3 font-semibold text-xs border-b-2 transition-all flex items-center gap-2 ${activeTab === "self"
+            ? "border-[#C86A24] text-[#C86A24] bg-orange-50/40 rounded-t-lg"
+            : "border-transparent text-slate-600 hover:text-slate-900"
+            }`}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -745,23 +741,21 @@ export default function RbacPage() {
                   <div
                     key={r.id}
                     onClick={() => setSelectedRoleId(r.id)}
-                    className={`p-4 rounded-xl border text-left cursor-pointer transition-all relative ${
-                      isSelected
-                        ? "bg-gradient-to-br from-[#102747] to-[#19385F] text-white border-[#C86A24] shadow-md ring-2 ring-[#C86A24]/40"
-                        : "bg-white text-slate-800 border-slate-200 hover:border-slate-300 hover:shadow-xs"
-                    }`}
+                    className={`p-4 rounded-xl border text-left cursor-pointer transition-all relative ${isSelected
+                      ? "bg-gradient-to-br from-[#102747] to-[#19385F] text-white border-[#C86A24] shadow-md ring-2 ring-[#C86A24]/40"
+                      : "bg-white text-slate-800 border-slate-200 hover:border-slate-300 hover:shadow-xs"
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <span
-                        className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${
-                          isSelected
-                            ? "bg-white/20 text-white"
-                            : isAdmin
+                        className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${isSelected
+                          ? "bg-white/20 text-white"
+                          : isAdmin
                             ? "bg-amber-100 text-amber-900 border border-amber-300"
                             : r.isSystemRole
-                            ? "bg-blue-100 text-[#102747]"
-                            : "bg-emerald-100 text-emerald-800"
-                        }`}
+                              ? "bg-blue-100 text-[#102747]"
+                              : "bg-emerald-100 text-emerald-800"
+                          }`}
                       >
                         {isAdmin ? "SuperAdmin" : r.isSystemRole ? "System Role" : "Custom Role"}
                       </span>
@@ -847,11 +841,10 @@ export default function RbacPage() {
                       size="sm"
                       disabled={savingRole || !isRoleDirty}
                       onClick={() => void handleSaveRolePermissions()}
-                      className={`font-semibold shadow text-xs transition-all ${
-                        isRoleDirty
-                          ? "bg-[#C86A24] hover:bg-[#A34E14] text-white ring-2 ring-[#FDBA74]"
-                          : "bg-white/20 text-white hover:bg-white/30"
-                      }`}
+                      className={`font-semibold shadow text-xs transition-all ${isRoleDirty
+                        ? "bg-[#C86A24] hover:bg-[#A34E14] text-white ring-2 ring-[#FDBA74]"
+                        : "bg-white/20 text-white hover:bg-white/30"
+                        }`}
                     >
                       {savingRole ? "Saving..." : isRoleDirty ? "Save Role Permissions *" : "Saved"}
                     </Button>
@@ -882,7 +875,7 @@ export default function RbacPage() {
                   <thead className="bg-slate-100/80 border-b border-slate-200 text-slate-700 font-bold uppercase tracking-wider text-[10px]">
                     <tr>
                       <th className="py-3 px-4 w-72">Module / Feature</th>
-                      
+
                       {/* Menu Access Column Header */}
                       <th className="py-3 px-3 text-center w-28">
                         <div>Menu Access</div>
@@ -1003,9 +996,8 @@ export default function RbacPage() {
                       return (
                         <tr
                           key={mod.key}
-                          className={`hover:bg-slate-50/75 transition-colors ${
-                            hasMenu ? "bg-white" : "bg-slate-50/30 text-slate-400"
-                          }`}
+                          className={`hover:bg-slate-50/75 transition-colors ${hasMenu ? "bg-white" : "bg-slate-50/30 text-slate-400"
+                            }`}
                         >
                           {/* Module Name & Category */}
                           <td className="py-3 px-4">
@@ -1096,11 +1088,10 @@ export default function RbacPage() {
                                   return (
                                     <label
                                       key={spec.id}
-                                      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md border text-[11px] cursor-pointer transition-colors ${
-                                        specChecked
-                                          ? "bg-blue-50 border-blue-300 text-blue-900 font-semibold"
-                                          : "bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300"
-                                      }`}
+                                      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md border text-[11px] cursor-pointer transition-colors ${specChecked
+                                        ? "bg-blue-50 border-blue-300 text-blue-900 font-semibold"
+                                        : "bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300"
+                                        }`}
                                     >
                                       <input
                                         type="checkbox"
@@ -1125,11 +1116,10 @@ export default function RbacPage() {
                               <button
                                 type="button"
                                 onClick={() => handleToggleModuleRow(mod, !isFullRow)}
-                                className={`text-[10px] font-bold px-2 py-0.5 rounded border transition-colors ${
-                                  isFullRow
-                                    ? "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
-                                    : "bg-orange-50 text-[#C86A24] border-orange-200 hover:bg-orange-100"
-                                }`}
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded border transition-colors ${isFullRow
+                                  ? "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
+                                  : "bg-orange-50 text-[#C86A24] border-orange-200 hover:bg-orange-100"
+                                  }`}
                               >
                                 {isFullRow ? "Clear" : "All"}
                               </button>
@@ -1163,11 +1153,10 @@ export default function RbacPage() {
                       size="sm"
                       disabled={savingRole || !isRoleDirty}
                       onClick={() => void handleSaveRolePermissions()}
-                      className={`text-xs font-semibold shadow transition-all ${
-                        isRoleDirty
-                          ? "bg-[#C86A24] hover:bg-[#A34E14] text-white ring-2 ring-[#FDBA74]"
-                          : "bg-slate-300 text-slate-500 cursor-not-allowed"
-                      }`}
+                      className={`text-xs font-semibold shadow transition-all ${isRoleDirty
+                        ? "bg-[#C86A24] hover:bg-[#A34E14] text-white ring-2 ring-[#FDBA74]"
+                        : "bg-slate-300 text-slate-500 cursor-not-allowed"
+                        }`}
                     >
                       {savingRole ? "Saving..." : isRoleDirty ? "Save Role Permissions *" : "Permissions Saved"}
                     </Button>
@@ -1277,15 +1266,14 @@ export default function RbacPage() {
                             {u.roles.map((r) => (
                               <span
                                 key={r}
-                                className={`px-2 py-0.5 rounded-md font-semibold text-[10px] tracking-wide ${
-                                  r === "SystemAdmin"
-                                    ? "bg-[#102747] text-white"
-                                    : r === "Manager"
+                                className={`px-2 py-0.5 rounded-md font-semibold text-[10px] tracking-wide ${r === "SystemAdmin"
+                                  ? "bg-[#102747] text-white"
+                                  : r === "Manager"
                                     ? "bg-blue-100 text-blue-900 border border-blue-200"
                                     : r === "StaffUser"
-                                    ? "bg-orange-100 text-orange-900 border border-orange-200"
-                                    : "bg-emerald-100 text-emerald-900 border border-emerald-200"
-                                }`}
+                                      ? "bg-orange-100 text-orange-900 border border-orange-200"
+                                      : "bg-emerald-100 text-emerald-900 border border-emerald-200"
+                                  }`}
                               >
                                 {r}
                               </span>
@@ -1310,12 +1298,12 @@ export default function RbacPage() {
                         <td className="py-3.5 px-4 text-slate-500 text-[11px]">
                           {u.lastLoginAtUtc
                             ? new Date(u.lastLoginAtUtc).toLocaleDateString("en-IN", {
-                                day: "2-digit",
-                                month: "short",
-                                year: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
                             : "Never"}
                         </td>
 
@@ -1344,11 +1332,10 @@ export default function RbacPage() {
                             <button
                               type="button"
                               onClick={() => void handleToggleUserStatus(u)}
-                              className={`px-2.5 py-1 text-xs font-semibold rounded-md border transition-colors ${
-                                u.isEnabled
-                                  ? "border-rose-200 text-rose-700 hover:bg-rose-50"
-                                  : "border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                              }`}
+                              className={`px-2.5 py-1 text-xs font-semibold rounded-md border transition-colors ${u.isEnabled
+                                ? "border-rose-200 text-rose-700 hover:bg-rose-50"
+                                : "border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                                }`}
                             >
                               {u.isEnabled ? "Disable" : "Enable"}
                             </button>
@@ -1535,9 +1522,8 @@ export default function RbacPage() {
                     return (
                       <label
                         key={r.id}
-                        className={`flex items-center gap-2 p-2 rounded-lg border text-xs cursor-pointer ${
-                          checked ? "bg-blue-50 border-blue-300 font-semibold text-[#102747]" : "border-slate-200"
-                        }`}
+                        className={`flex items-center gap-2 p-2 rounded-lg border text-xs cursor-pointer ${checked ? "bg-blue-50 border-blue-300 font-semibold text-[#102747]" : "border-slate-200"
+                          }`}
                       >
                         <input
                           type="checkbox"
@@ -1598,11 +1584,10 @@ export default function RbacPage() {
                 return (
                   <label
                     key={r.id}
-                    className={`flex items-center justify-between p-3 rounded-xl border text-xs cursor-pointer ${
-                      checked
-                        ? "bg-blue-50/70 border-blue-300 font-semibold text-[#102747]"
-                        : "border-slate-200 hover:bg-slate-50"
-                    }`}
+                    className={`flex items-center justify-between p-3 rounded-xl border text-xs cursor-pointer ${checked
+                      ? "bg-blue-50/70 border-blue-300 font-semibold text-[#102747]"
+                      : "border-slate-200 hover:bg-slate-50"
+                      }`}
                   >
                     <div className="flex items-center gap-2.5">
                       <input
