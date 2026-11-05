@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { readStorage } from "../api/client";
 import { Button } from "../components/ui";
 
 export default function LoginPage() {
@@ -17,7 +18,8 @@ export default function LoginPage() {
   const [mfaCode, setMfaCode] = useState("");
 
   function navigateAfterLogin() {
-    const perms = (JSON.parse(localStorage.getItem("cms.auth.v1") ?? "{}") as { permissions?: string[] }).permissions ?? permissions;
+    const env = readStorage();
+    const perms = env?.permissions ?? permissions;
     if (perms.length > 0 && perms.every((p) => p === "portal.access")) {
       nav("/portal", { replace: true });
     } else {

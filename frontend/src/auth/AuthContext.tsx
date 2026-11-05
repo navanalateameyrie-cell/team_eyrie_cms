@@ -1,7 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-
-const STORAGE_KEY = "cms.auth.v1";
+import {
+  readStorage,
+  setAuthStorage,
+  clearAuthStorage,
+} from "../api/client";
 
 export interface AuthState {
   token: string | null;
@@ -11,7 +14,10 @@ export interface AuthState {
   permissions: string[];
 }
 
-export interface LoginResult { mfaRequired: boolean; mfaPendingToken?: string }
+export interface LoginResult {
+  mfaRequired: boolean;
+  mfaPendingToken?: string;
+}
 
 interface AuthContextValue extends AuthState {
   login: (email: string, password: string) => Promise<LoginResult>;
@@ -26,23 +32,26 @@ const empty: AuthState = { token: null, refreshToken: null, userName: null, role
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 function loadFromStorage(): AuthState {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as AuthState) : empty;
-  } catch {
-    return empty;
-  }
+  const env = readStorage();
+  if (!env || !env.token) return empty;
+  return {
+    token: env.token,
+    refreshToken: env.refreshToken ?? null,
+    userName: env.userName ?? null,
+    roles: env.roles ?? [],
+    permissions: env.permissions ?? [],
+  };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>(loadFromStorage);
 
   useEffect(() => {
-    try {
-      if (state.token) localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      else localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // ignore
+    // Keep local storage in sync whenever state changes
+    if (state.token) {
+      setAuthStorage(state);
+    } else {
+      clearAuthStorage();
     }
   }, [state]);
 
@@ -83,18 +92,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }) {
     const me = await fetch("/api/v1/auth/me", {
       headers: { Authorization: `Bearer ${data.accessToken}` },
-    }).then((r) => (r.ok ? r.json() : null));
-    setState({
+    }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+
+    const nextState: AuthState = {
       token: data.accessToken,
       refreshToken: data.refreshToken,
       userName: me?.userName ?? email ?? me?.email ?? "signed in",
       roles: data.roles ?? [],
       permissions: data.permissions ?? [],
-    });
+    };
+
+    // 1. SYNCHRONOUSLY store in memory and localStorage IMMEDIATELY.
+    // This avoids async React state lag when subsequent route transition or API calls run.
+    setAuthStorage(nextState);
+
+    // 2. Update React state
+    setState(nextState);
   }
 
   const logout = useCallback(async () => {
     const current = state.refreshToken;
+
+    // 1. SYNCHRONOUSLY clear credentials from memory and localStorage IMMEDIATELY
+    clearAuthStorage();
+    setState(empty);
+
+    // 2. Best-effort server-side token revocation
     try {
       if (current) {
         await fetch("/api/v1/auth/logout", {
@@ -103,20 +126,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           body: JSON.stringify({ refreshToken: current }),
         });
       }
-    } catch { /* best-effort — clear local state regardless */ }
-    setState(empty);
+    } catch { /* best-effort — local state is already cleared */ }
   }, [state.refreshToken]);
 
   const logoutEverywhere = useCallback(async () => {
+    const currentToken = state.token;
+
+    // 1. SYNCHRONOUSLY clear credentials from memory and localStorage IMMEDIATELY
+    clearAuthStorage();
+    setState(empty);
+
+    // 2. Best-effort server-side token revocation
     try {
-      if (state.token) {
+      if (currentToken) {
         await fetch("/api/v1/auth/logout-everywhere", {
           method: "POST",
-          headers: { Authorization: `Bearer ${state.token}` },
+          headers: { Authorization: `Bearer ${currentToken}` },
         });
       }
-    } catch { /* best-effort */ }
-    setState(empty);
+    } catch { /* best-effort — local state is already cleared */ }
   }, [state.token]);
 
   const hasPermission = useCallback(
