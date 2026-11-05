@@ -538,9 +538,9 @@ export default function Layout() {
                   <button
                     type="button"
                     onClick={() => setUserMenuOpen((v) => !v)}
-                    className="flex items-center gap-2.5 p-1.5 rounded-xl text-left bg-white/70 hover:bg-white border border-transparent hover:border-[#CBDCE9] transition-all focus:outline-none focus:ring-2 focus:ring-[#C59A52]/40"
+                    className="flex items-center gap-2.5 p-1.5 rounded-xl text-left bg-white/70 hover:bg-white border border-transparent hover:border-[#CBDCE9] transition-all focus:outline-none focus:ring-2 focus:ring-[#C86A24]/40"
                   >
-                    <div className="h-8 w-8 rounded-full bg-[#102747] text-[#C59A52] border border-[#C59A52]/30 flex items-center justify-center font-bold text-xs uppercase shadow-xs">
+                    <div className="h-8 w-8 rounded-full bg-[#102747] text-[#FDBA74] border border-[#C86A24]/40 flex items-center justify-center font-bold text-xs uppercase shadow-xs">
                       {userName ? userName.charAt(0) : "U"}
                     </div>
                     <div className="hidden md:block text-left">

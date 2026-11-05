@@ -25,10 +25,10 @@ const toneStyles: Record<BadgeTone, { bg: string; text: string; dot: string; bor
     border: "border-navy-200",
   },
   gold: {
-    bg: "bg-gold-50",
-    text: "text-gold-700",
-    dot: "bg-gold-500",
-    border: "border-gold-200",
+    bg: "bg-[#FFF5ED]",
+    text: "text-[#C86A24]",
+    dot: "bg-[#C86A24]",
+    border: "border-[#FDBA74]/60",
   },
   success: {
     bg: "bg-emerald-50",

@@ -14,15 +14,15 @@ export interface DonutChartProps {
 }
 
 const DONUT_COLORS = [
-  "#172B4D", // Deep Corporate Navy
+  "#102747", // Deep Corporate Navy
   "#2563EB", // Royal Sapphire Blue
   "#0D9488", // Deep Teal
-  "#B08D57", // Muted Gold Accent
-  "#D97706", // Amber
+  "#C86A24", // Warm Terracotta Orange
   "#6366F1", // Indigo
+  "#059669", // Emerald
+  "#D97706", // Amber
   "#475569", // Slate
   "#E11D48", // Rose
-  "#059669", // Emerald
   "#8B5CF6", // Violet
 ];
 
@@ -79,7 +79,7 @@ export default function DonutChart({
         title={title}
         subtitle={subtitle}
         icon={
-          <svg className="w-4 h-4 text-[#C59A52]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4 text-[#FDBA74]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
           </svg>

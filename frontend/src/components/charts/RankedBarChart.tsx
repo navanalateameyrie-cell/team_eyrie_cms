@@ -32,7 +32,7 @@ export default function RankedBarChart({
         title={title}
         subtitle={subtitle}
         icon={
-          <svg className="w-4 h-4 text-[#C59A52]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4 text-[#FDBA74]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
           </svg>
         }
@@ -70,7 +70,7 @@ export default function RankedBarChart({
             <div className="mt-3">
               <a
                 href="/admin/staff-workload"
-                className="text-xs font-semibold text-navy-800 hover:text-navy-950 underline decoration-gold-400 underline-offset-4"
+                className="text-xs font-semibold text-[#C86A24] hover:text-[#A34E14] underline decoration-[#FDBA74] underline-offset-4"
               >
                 Open Staff Workload Allocation &rarr;
               </a>
@@ -94,10 +94,10 @@ export default function RankedBarChart({
 
               const barGradient =
                 rank === 1
-                  ? "from-navy-950 via-navy-900 to-navy-800 shadow-sm"
+                  ? "from-[#102747] via-[#19385F] to-[#264A77] shadow-xs"
                   : rank === 2
-                    ? "from-navy-900 via-navy-800 to-navy-700"
-                    : "from-navy-800 to-slate-700";
+                    ? "from-[#19385F] via-[#264A77] to-[#3976B9]"
+                    : "from-[#264A77] via-[#3976B9] to-[#5592D0]";
 
               return (
                 <div
@@ -105,12 +105,15 @@ export default function RankedBarChart({
                   className="group p-2 rounded-lg hover:bg-slate-50/80 transition-colors border border-transparent hover:border-slate-200/50"
                 >
                   <div className="flex items-center justify-between text-xs mb-2 gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <span
                         className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] shrink-0 ${rankBadge}`}
                       >
                         #{rank}
                       </span>
+                      <div className="h-6 w-6 rounded-full bg-gradient-to-br from-[#102747] to-[#19385F] text-[#FDBA74] flex items-center justify-center font-bold text-[10px] shrink-0 border border-[#C86A24]/30 shadow-2xs">
+                        {r.label.charAt(0).toUpperCase()}
+                      </div>
                       <span
                         className="font-semibold text-navy-950 truncate group-hover:text-navy-700 transition-colors"
                         title={r.label}

@@ -17,12 +17,12 @@ export interface HorizontalBarChartProps {
 
 // Executive corporate color gradients based on ranking
 const RANK_GRADIENTS = [
-  "from-navy-950 via-navy-900 to-navy-800 shadow-sm", // #1 dominant
-  "from-navy-900 via-navy-800 to-navy-700",          // #2
-  "from-navy-800 via-navy-700 to-slate-700",         // #3
-  "from-slate-700 via-slate-600 to-slate-600",       // #4
-  "from-slate-600 via-slate-500 to-slate-500",       // #5
-  "from-slate-500 via-slate-400 to-slate-400",       // #6+
+  "from-[#102747] via-[#19385F] to-[#264A77] shadow-xs", // #1 dominant
+  "from-[#19385F] via-[#264A77] to-[#3976B9]",          // #2
+  "from-[#264A77] via-[#3976B9] to-[#5592D0]",         // #3
+  "from-[#3976B9] via-[#5592D0] to-[#7BB2E5]",         // #4
+  "from-[#5592D0] via-[#7BB2E5] to-[#A2CEF5]",         // #5
+  "from-[#7BB2E5] via-[#A2CEF5] to-[#CBE5FB]",         // #6+
 ];
 
 export default function HorizontalBarChart({
@@ -68,7 +68,7 @@ export default function HorizontalBarChart({
         title={title}
         subtitle={subtitle}
         icon={
-          <svg className="w-4 h-4 text-[#C59A52]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4 text-[#FDBA74]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
         }
@@ -82,7 +82,7 @@ export default function HorizontalBarChart({
                 <button
                   type="button"
                   onClick={() => setExpanded(!expanded)}
-                  className="text-xs font-semibold text-[#E8C98F] hover:text-white transition-colors focus:outline-none focus:underline"
+                  className="text-xs font-semibold text-[#FDBA74] hover:text-white transition-colors focus:outline-none focus:underline"
                   aria-expanded={expanded}
                   aria-controls={chartId}
                 >

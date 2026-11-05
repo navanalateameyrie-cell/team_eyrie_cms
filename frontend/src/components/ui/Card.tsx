@@ -3,7 +3,7 @@ import type { HTMLAttributes, ReactNode } from "react";
 export function Card({ className = "", children, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`rounded-xl border border-slate-200/90 bg-white shadow-card transition-shadow ${className}`}
+      className={`rounded-2xl border border-[#E0E6EF] bg-white shadow-[0_2px_12px_rgba(16,33,58,0.04)] transition-all duration-200 ${className}`}
       {...props}
     >
       {children}
@@ -41,9 +41,9 @@ export function CardHeader({
       <div className="flex items-center gap-3 min-w-0">
         {icon && (
           <div
-            className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 shadow-2xs ${isNavy
-              ? "bg-white/10 text-[#C59A52] border border-[#C59A52]/30"
-              : "bg-[#102747]/5 text-[#C49A52] border border-[#C49A52]/30 rounded-lg"
+            className={`h-8 w-8 rounded-xl flex items-center justify-center shrink-0 shadow-2xs ${isNavy
+              ? "bg-white/10 text-[#FDBA74] border border-[#C86A24]/40"
+              : "bg-[#C86A24]/10 text-[#C86A24] border border-[#C86A24]/30"
               }`}
           >
             {icon}
@@ -51,7 +51,7 @@ export function CardHeader({
         )}
         <div className="min-w-0">
           {title && (
-            <h3 className={`font-bold leading-tight ${isNavy ? "text-white text-sm" : "text-slate-900"}`}>
+            <h3 className={`font-bold leading-tight ${isNavy ? "text-white text-sm tracking-tight" : "text-[#102747] text-sm"}`}>
               {title}
             </h3>
           )}

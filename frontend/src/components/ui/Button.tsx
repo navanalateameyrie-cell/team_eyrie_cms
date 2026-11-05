@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-export type ButtonVariant = "primary" | "secondary" | "outline" | "danger" | "ghost" | "gold";
+export type ButtonVariant = "primary" | "secondary" | "outline" | "danger" | "ghost" | "gold" | "accent";
 export type ButtonSize = "xs" | "sm" | "md" | "lg";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -17,17 +17,19 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-navy-800 text-white hover:bg-navy-900 active:bg-navy-950 shadow-sm border border-navy-800/30 focus-visible:ring-navy-700",
+    "bg-[#102747] text-white hover:bg-[#19385F] active:bg-[#0C1E36] shadow-sm border border-[#102747]/30 focus-visible:ring-[#102747]",
   secondary:
     "bg-slate-100 text-slate-800 hover:bg-slate-200 active:bg-slate-300 shadow-sm border border-slate-200 focus-visible:ring-slate-400",
   outline:
-    "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-slate-900 active:bg-slate-100 shadow-subtle focus-visible:ring-navy-600",
+    "bg-white text-slate-700 border border-[#CBDCE9] hover:bg-[#F0F5FB] hover:text-[#102747] active:bg-slate-100 shadow-2xs focus-visible:ring-[#348FE0]",
   danger:
     "bg-rose-500 text-white hover:bg-rose-600 active:bg-rose-700 shadow-sm border border-transparent focus-visible:ring-rose-500",
   ghost:
     "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 active:bg-slate-200 border border-transparent focus-visible:ring-navy-500",
   gold:
-    "bg-gold-500 text-white hover:bg-gold-600 active:bg-gold-700 shadow-sm border border-gold-600/20 focus-visible:ring-gold-500",
+    "bg-gradient-to-r from-[#C86A24] via-[#BA5F1C] to-[#A34E14] text-white hover:brightness-105 active:brightness-95 shadow-sm border border-[#C86A24]/30 focus-visible:ring-[#C86A24]",
+  accent:
+    "bg-gradient-to-r from-[#C86A24] via-[#BA5F1C] to-[#A34E14] text-white hover:brightness-105 active:brightness-95 shadow-sm border border-[#C86A24]/30 focus-visible:ring-[#C86A24]",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

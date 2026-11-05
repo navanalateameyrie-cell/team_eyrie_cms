@@ -81,7 +81,7 @@ export default function DashboardPage() {
       {/* Dashboard Top Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E0E6EF]">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-[#102747] text-[#C59A52] border border-[#C59A52]/30 flex items-center justify-center shadow-xs shrink-0">
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#102747] to-[#19385F] text-[#FDBA74] border border-[#C86A24]/40 flex items-center justify-center shadow-xs shrink-0">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
@@ -99,7 +99,7 @@ export default function DashboardPage() {
             <select
               value={financialYear}
               onChange={(e) => setFinancialYear(e.target.value)}
-              className="appearance-none bg-white border border-[#E3E8F0] hover:border-slate-300 text-xs font-semibold text-[#172A45] py-2 pl-3 pr-8 rounded-lg shadow-2xs focus:outline-none focus:ring-1 focus:ring-[#C49A52] transition-colors cursor-pointer font-mono"
+              className="appearance-none bg-white border border-[#E3E8F0] hover:border-slate-300 text-xs font-semibold text-[#172A45] py-2 pl-3 pr-8 rounded-lg shadow-2xs focus:outline-none focus:ring-1 focus:ring-[#C86A24] transition-colors cursor-pointer font-mono"
             >
               <option value="FY 2024-25">FY 2024-25</option>
               <option value="FY 2023-24">FY 2023-24</option>
@@ -121,12 +121,12 @@ export default function DashboardPage() {
             <span>Refresh</span>
           </button>
 
-          {/* Quick Actions Dropdown with Gold Background */}
+          {/* Quick Actions Dropdown with Warm Terracotta Orange Accent */}
           <div className="relative" ref={quickActionsRef}>
             <button
               type="button"
               onClick={() => setQuickActionsOpen(!quickActionsOpen)}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-gradient-to-r from-[#C49A52] to-[#B08642] hover:brightness-105 text-white text-xs font-semibold shadow-sm transition-all"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-gradient-to-r from-[#C86A24] via-[#BA5F1C] to-[#A34E14] hover:brightness-105 text-white text-xs font-semibold shadow-md transition-all"
             >
               <svg className="w-3.5 h-3.5 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -143,7 +143,7 @@ export default function DashboardPage() {
                     onClick={() => setQuickActionsOpen(false)}
                     className="flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-[#172A45]"
                   >
-                    <span className="text-[#C49A52] font-bold text-sm">+</span>
+                    <span className="text-[#C86A24] font-bold text-sm">+</span>
                     <span>Onboard Client</span>
                   </Link>
                   <Link
@@ -161,7 +161,7 @@ export default function DashboardPage() {
                     onClick={() => setQuickActionsOpen(false)}
                     className="flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-[#172A45]"
                   >
-                    <span className="text-[#D49A43]">📅</span>
+                    <span className="text-[#C86A24]">📅</span>
                     <span>Compliance Calendar</span>
                   </Link>
                   <Link

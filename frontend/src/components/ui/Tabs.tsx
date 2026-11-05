@@ -70,7 +70,7 @@ export function Tabs<T extends string = string>({
             onClick={() => onChange(tab.id)}
             className={`flex items-center gap-2 py-2.5 px-1 border-b-2 text-sm font-medium transition-colors shrink-0 whitespace-nowrap select-none ${
               isActive
-                ? "border-navy-800 text-navy-900 font-semibold"
+                ? "border-[#C86A24] text-[#102747] font-semibold"
                 : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300"
             } ${tab.disabled ? "opacity-40 cursor-not-allowed" : ""}`}
           >
