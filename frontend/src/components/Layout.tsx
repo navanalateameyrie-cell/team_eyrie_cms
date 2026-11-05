@@ -260,19 +260,19 @@ export default function Layout() {
       {/* Brand Header */}
       <div className={`py-4 border-b border-[#19385F] flex items-center justify-between ${collapsed ? "px-3 justify-center" : "px-5"}`}>
         <NavLink to="/dashboard" className="flex items-center gap-3 group">
-          <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-[#C59A52] to-[#B08642] text-[#0C1E36] font-black flex items-center justify-center text-sm shadow-md group-hover:brightness-110 transition-all shrink-0">
+          <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-[#C86A24] to-[#A34E14] text-white font-black flex items-center justify-center text-sm shadow-md group-hover:brightness-110 transition-all shrink-0">
             CA
           </div>
           {!collapsed && (
             <div className="min-w-0">
               <div className="text-white font-bold tracking-wide leading-tight text-base flex items-center gap-1.5">
                 <span>CMS</span>
-                <span className="text-[#E8C98F]">_CA</span>
-                <span className="text-[9px] font-mono text-[#E8C98F] bg-[#C59A52]/15 border border-[#C59A52]/30 px-1 py-0.2 rounded font-semibold tracking-wider">
+                <span className="text-[#FDBA74]">_CA</span>
+                <span className="text-[9px] font-mono text-[#FDBA74] bg-[#C86A24]/20 border border-[#C86A24]/40 px-1 py-0.2 rounded font-semibold tracking-wider">
                   ERP
                 </span>
               </div>
-              <div className="text-[10px] text-[#E8C98F] font-semibold tracking-wider uppercase leading-tight truncate">
+              <div className="text-[10px] text-[#FDBA74] font-semibold tracking-wider uppercase leading-tight truncate">
                 Practice Management
               </div>
             </div>
@@ -317,8 +317,8 @@ export default function Layout() {
                         ? "justify-center p-2.5 mx-auto"
                         : "gap-2.5 px-3 py-2 border-l-4"
                       } ${isActive
-                        ? `${collapsed ? "" : "border-[#E8C98F]"} bg-gradient-to-r from-[#C59A52] to-[#B08642] text-white font-semibold shadow-sm hover:brightness-105`
-                        : `${collapsed ? "" : "border-transparent hover:border-[#D47E38]/85"} text-slate-300 hover:bg-gradient-to-r hover:from-[#C87432]/22 hover:via-[#B86221]/16 hover:to-[#C87432]/8 hover:text-[#FFF2E5]`
+                        ? `${collapsed ? "" : "border-[#FDBA74]"} bg-gradient-to-r from-[#C86A24] via-[#BA5F1C] to-[#A34E14] text-white font-semibold shadow-md hover:brightness-110`
+                        : `${collapsed ? "" : "border-transparent hover:border-[#FDBA74]/85"} text-slate-300 hover:bg-gradient-to-r hover:from-[#C86A24]/28 hover:via-[#BA5F1C]/20 hover:to-[#A34E14]/10 hover:text-[#FFF5EA]`
                       }`
                     }
                   >
@@ -356,8 +356,8 @@ export default function Layout() {
                   ? "justify-center p-2.5"
                   : "justify-between px-3 py-2 border-l-4"
                   } ${isMastersActive
-                    ? `${collapsed ? "" : "border-[#E8C98F]"} bg-gradient-to-r from-[#C59A52] to-[#B08642] text-white font-semibold shadow-sm hover:brightness-105`
-                    : `${collapsed ? "" : "border-transparent hover:border-[#D47E38]/85"} text-slate-300 hover:bg-gradient-to-r hover:from-[#C87432]/22 hover:via-[#B86221]/16 hover:to-[#C87432]/8 hover:text-[#FFF2E5]`
+                    ? `${collapsed ? "" : "border-[#FDBA74]"} bg-gradient-to-r from-[#C86A24] via-[#BA5F1C] to-[#A34E14] text-white font-semibold shadow-md hover:brightness-110`
+                    : `${collapsed ? "" : "border-transparent hover:border-[#FDBA74]/85"} text-slate-300 hover:bg-gradient-to-r hover:from-[#C86A24]/28 hover:via-[#BA5F1C]/20 hover:to-[#A34E14]/10 hover:text-[#FFF5EA]`
                   }`}
               >
                 <div className={`flex items-center ${collapsed ? "justify-center" : "gap-2.5"}`}>
@@ -381,8 +381,8 @@ export default function Layout() {
                       to={sub.to}
                       className={({ isActive }) =>
                         `block px-2.5 py-1.5 rounded-lg text-[11px] transition-colors duration-150 ${isActive
-                          ? "text-[#E8C98F] font-semibold bg-[#19385F]"
-                          : "text-slate-400 hover:text-[#FFF2E5] hover:bg-[#C87432]/20"
+                          ? "text-[#FDBA74] font-semibold bg-[#C86A24]/25 border-l-2 border-[#FDBA74]"
+                          : "text-slate-400 hover:text-[#FFF2E5] hover:bg-[#C86A24]/20"
                         }`
                       }
                     >
@@ -404,7 +404,7 @@ export default function Layout() {
             type="button"
             onClick={toggleCollapse}
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="group w-full flex items-center justify-center gap-2 py-1.5 px-2 rounded-lg text-slate-400 hover:text-[#FFF2E5] hover:bg-[#C87432]/15 text-[11px] transition-colors duration-150"
+            className="group w-full flex items-center justify-center gap-2 py-1.5 px-2 rounded-lg text-slate-400 hover:text-[#FFF2E5] hover:bg-[#C86A24]/15 text-[11px] transition-colors duration-150"
           >
             <svg
               className={`w-4 h-4 transition-transform duration-150 group-hover:text-[#FDBA74] ${collapsed ? "rotate-180" : ""}`}
@@ -421,13 +421,13 @@ export default function Layout() {
         {token ? (
           <div className={`flex items-center gap-2 p-2 rounded-xl bg-[#0C1E36] border border-[#19385F] ${collapsed ? "justify-center" : "justify-between"}`}>
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="h-7 w-7 rounded-full bg-[#102747] text-[#C59A52] border border-[#C59A52]/40 flex items-center justify-center font-bold text-xs uppercase shrink-0 shadow-xs">
+              <div className="h-7 w-7 rounded-full bg-[#102747] text-[#FDBA74] border border-[#C86A24]/50 flex items-center justify-center font-bold text-xs uppercase shrink-0 shadow-xs">
                 {userName ? userName.charAt(0) : "U"}
               </div>
               {!collapsed && (
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-semibold text-white truncate">{userName}</div>
-                  <div className="text-[10px] text-[#E8C98F] truncate font-mono">
+                  <div className="text-[10px] text-[#FDBA74] truncate font-mono">
                     {roles[0] ?? "Staff"}
                   </div>
                 </div>
@@ -440,7 +440,7 @@ export default function Layout() {
                   await logout();
                   navigate("/login");
                 }}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-[#FDBA74] hover:bg-[#C87432]/20 transition-colors shrink-0"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-[#FDBA74] hover:bg-[#C86A24]/20 transition-colors shrink-0"
                 title="Sign Out"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -452,7 +452,7 @@ export default function Layout() {
         ) : (
           <NavLink
             to="/login"
-            className="flex items-center justify-center w-full py-2 px-3 rounded-xl bg-[#C59A52] hover:bg-[#b08642] text-white font-medium text-xs shadow-sm transition-colors"
+            className="flex items-center justify-center w-full py-2 px-3 rounded-xl bg-gradient-to-r from-[#C86A24] to-[#A34E14] hover:brightness-110 text-white font-medium text-xs shadow-sm transition-colors"
           >
             {collapsed ? "Sign In" : "Sign in to Portal"}
           </NavLink>
