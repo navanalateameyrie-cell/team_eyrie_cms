@@ -313,17 +313,23 @@ export default function Layout() {
                     end={item.to === "/dashboard" || item.to === "/"}
                     title={collapsed ? item.label : undefined}
                     className={({ isActive }) =>
-                      `flex items-center rounded-xl font-medium transition-all ${collapsed
+                      `group flex items-center rounded-xl font-medium transition-all duration-150 ${collapsed
                         ? "justify-center p-2.5 mx-auto"
-                        : "gap-2.5 px-3 py-2"
+                        : "gap-2.5 px-3 py-2 border-l-4"
                       } ${isActive
-                        ? "bg-gradient-to-r from-[#C59A52] to-[#B08642] text-white font-semibold shadow-sm border-l-4 border-[#E8C98F]"
-                        : "text-slate-300 hover:bg-[#19385F] hover:text-white"
+                        ? `${collapsed ? "" : "border-[#E8C98F]"} bg-gradient-to-r from-[#C59A52] to-[#B08642] text-white font-semibold shadow-sm hover:brightness-105`
+                        : `${collapsed ? "" : "border-transparent hover:border-[#D47E38]/85"} text-slate-300 hover:bg-gradient-to-r hover:from-[#C87432]/22 hover:via-[#B86221]/16 hover:to-[#C87432]/8 hover:text-[#FFF2E5]`
                       }`
                     }
                   >
-                    <span className="shrink-0">{item.icon}</span>
-                    {!collapsed && <span className="truncate">{item.label}</span>}
+                    {({ isActive }) => (
+                      <>
+                        <span className={`shrink-0 transition-colors duration-150 ${isActive ? "text-white" : "text-slate-300 group-hover:text-[#FDBA74]"}`}>
+                          {item.icon}
+                        </span>
+                        {!collapsed && <span className="truncate">{item.label}</span>}
+                      </>
+                    )}
                   </NavLink>
                 ))}
               </div>
@@ -346,22 +352,24 @@ export default function Layout() {
                 type="button"
                 onClick={() => setMastersExpanded((v) => !v)}
                 title={collapsed ? "Reference Masters" : undefined}
-                className={`w-full flex items-center rounded-xl font-medium transition-all text-left ${collapsed
+                className={`group w-full flex items-center rounded-xl font-medium transition-all duration-150 text-left ${collapsed
                   ? "justify-center p-2.5"
-                  : "justify-between px-3 py-2"
+                  : "justify-between px-3 py-2 border-l-4"
                   } ${isMastersActive
-                    ? "bg-gradient-to-r from-[#C59A52] to-[#B08642] text-white font-semibold shadow-sm border-l-4 border-[#E8C98F]"
-                    : "text-slate-300 hover:bg-[#19385F] hover:text-white"
+                    ? `${collapsed ? "" : "border-[#E8C98F]"} bg-gradient-to-r from-[#C59A52] to-[#B08642] text-white font-semibold shadow-sm hover:brightness-105`
+                    : `${collapsed ? "" : "border-transparent hover:border-[#D47E38]/85"} text-slate-300 hover:bg-gradient-to-r hover:from-[#C87432]/22 hover:via-[#B86221]/16 hover:to-[#C87432]/8 hover:text-[#FFF2E5]`
                   }`}
               >
                 <div className={`flex items-center ${collapsed ? "justify-center" : "gap-2.5"}`}>
-                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className={`w-4 h-4 shrink-0 transition-colors duration-150 ${isMastersActive ? "text-white" : "text-slate-300 group-hover:text-[#FDBA74]"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7zM9 9h6M9 13h6M9 17h4" />
                   </svg>
                   {!collapsed && <span>Masters</span>}
                 </div>
                 {!collapsed && (
-                  <span className="text-[10px] text-slate-400">{mastersExpanded || isMastersActive ? "▾" : "▸"}</span>
+                  <span className={`text-[10px] transition-colors duration-150 ${isMastersActive ? "text-white" : "text-slate-400 group-hover:text-[#FDBA74]"}`}>
+                    {mastersExpanded || isMastersActive ? "▾" : "▸"}
+                  </span>
                 )}
               </button>
 
@@ -372,9 +380,9 @@ export default function Layout() {
                       key={sub.to}
                       to={sub.to}
                       className={({ isActive }) =>
-                        `block px-2.5 py-1.5 rounded-lg text-[11px] transition-colors ${isActive
+                        `block px-2.5 py-1.5 rounded-lg text-[11px] transition-colors duration-150 ${isActive
                           ? "text-[#E8C98F] font-semibold bg-[#19385F]"
-                          : "text-slate-400 hover:text-white hover:bg-[#19385F]/50"
+                          : "text-slate-400 hover:text-[#FFF2E5] hover:bg-[#C87432]/20"
                         }`
                       }
                     >
@@ -396,10 +404,10 @@ export default function Layout() {
             type="button"
             onClick={toggleCollapse}
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="w-full flex items-center justify-center gap-2 py-1.5 px-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#0C1E36] text-[11px] transition-colors"
+            className="group w-full flex items-center justify-center gap-2 py-1.5 px-2 rounded-lg text-slate-400 hover:text-[#FFF2E5] hover:bg-[#C87432]/15 text-[11px] transition-colors duration-150"
           >
             <svg
-              className={`w-4 h-4 transition-transform ${collapsed ? "rotate-180" : ""}`}
+              className={`w-4 h-4 transition-transform duration-150 group-hover:text-[#FDBA74] ${collapsed ? "rotate-180" : ""}`}
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -432,7 +440,7 @@ export default function Layout() {
                   await logout();
                   navigate("/login");
                 }}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#19385F] transition-colors shrink-0"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-[#FDBA74] hover:bg-[#C87432]/20 transition-colors shrink-0"
                 title="Sign Out"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
