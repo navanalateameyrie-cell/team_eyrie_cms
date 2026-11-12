@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, apiUrl } from "./client";
 
 export type AuditAction = "Create" | "Update" | "Delete" | "Read" | "Export";
 
@@ -75,6 +75,6 @@ export const auditApi = {
     for (const [k, v] of Object.entries(q))
       if (v !== undefined && v !== "" && v !== null && k !== "skip" && k !== "take") p.set(k, String(v));
     const qs = p.toString();
-    return qs ? `/api/v1/audit/export?${qs}` : "/api/v1/audit/export";
+    return apiUrl(qs ? `/api/v1/audit/export?${qs}` : "/api/v1/audit/export");
   },
 };

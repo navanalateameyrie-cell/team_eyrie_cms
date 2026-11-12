@@ -13,6 +13,7 @@ using CMS.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -153,14 +154,35 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+// --- Forwarded headers (Render / reverse proxy support for RemoteIpAddress & HTTPS) ---
+builder.Services.Configure<ForwardedHeadersOptions>(opts =>
+{
+    opts.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    opts.KnownNetworks.Clear();
+    opts.KnownProxies.Clear();
+});
+
 // --- CORS ---
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-    ?? new[] { "http://localhost:5173" };
+var configuredOrigins = (builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>())
+    .Concat((builder.Configuration["Cors:AllowedOriginsCsv"] ?? builder.Configuration["CORS_ALLOWED_ORIGINS"] ?? string.Empty)
+        .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+    .Where(o => !string.IsNullOrWhiteSpace(o))
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
+
+if (configuredOrigins.Length == 0)
+{
+    configuredOrigins = new[] { "http://localhost:5173" };
+}
+
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
-    p.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
+    p.SetIsOriginAllowed(origin => IsOriginAllowed(origin, configuredOrigins))
+     .AllowAnyHeader()
+     .AllowAnyMethod()
+     .AllowCredentials()));
 
 // --- Health checks ---
-var connectionString = builder.Configuration.GetConnectionString("CmsDb");
+var connectionString = PostgresConnectionStringHelper.Resolve(builder.Configuration);
 var healthBuilder = builder.Services.AddHealthChecks();
 if (!string.IsNullOrWhiteSpace(connectionString))
 {
@@ -170,6 +192,7 @@ if (!string.IsNullOrWhiteSpace(connectionString))
 var app = builder.Build();
 
 // --- Pipeline ---
+app.UseForwardedHeaders();
 app.UseSerilogRequestLogging(opts =>
 {
     opts.EnrichDiagnosticContext = (diag, http) =>
@@ -182,7 +205,7 @@ app.UseSerilogRequestLogging(opts =>
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Swagger:Enabled"))
 {
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "CMS API v1"));
@@ -228,32 +251,44 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
     }
 });
 
-// --- Development seeding (skippable so integration tests can seed themselves) ---
+// --- Startup migrations & seeding (Development always seeds unless Dev:SkipHostSeed=true;
+// Production/Demo opt in explicitly via Db:AutoMigrate / Db:SeedOnStartup / Db:SeedDemoData) ---
 var skipHostSeed = app.Configuration.GetValue<bool>("Dev:SkipHostSeed");
-if (app.Environment.IsDevelopment() && !skipHostSeed)
+var autoMigrate = app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Db:AutoMigrate");
+var seedIdentity = app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Db:SeedOnStartup");
+var seedDemoData = app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Db:SeedDemoData");
+
+if (!skipHostSeed && (autoMigrate || seedIdentity || seedDemoData))
 {
     using var scope = app.Services.CreateScope();
     var sp = scope.ServiceProvider;
     try
     {
         var db = sp.GetRequiredService<CmsDbContext>();
-        if (db.Database.IsRelational() && db.Database.ProviderName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) == true)
+        if (autoMigrate && db.Database.IsRelational() &&
+            db.Database.ProviderName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) == true)
         {
-            await db.Database.MigrateAsync();
+            await MigrateWithRetryAsync(db, app.Logger);
         }
-        var roles = sp.GetRequiredService<RoleManager<ApplicationRole>>();
-        var users = sp.GetRequiredService<UserManager<ApplicationUser>>();
-        await IdentitySeeder.SeedAsync(db, roles, users, sp.GetRequiredService<ILogger<Program>>());
-        await CMS.Infrastructure.Clients.ServiceSchemaSeeder.ApplyAsync(db,
-            sp.GetRequiredService<ILogger<Program>>());
-        await CMS.Infrastructure.Compliance.ComplianceDefaultsSeeder.ApplyAsync(db,
-            sp.GetRequiredService<ILogger<Program>>());
-        await CMS.Infrastructure.Persistence.DevSampleDataSeeder.ApplyAsync(db,
-            sp.GetRequiredService<ILogger<Program>>());
+        if (seedIdentity)
+        {
+            var roles = sp.GetRequiredService<RoleManager<ApplicationRole>>();
+            var users = sp.GetRequiredService<UserManager<ApplicationUser>>();
+            await IdentitySeeder.SeedAsync(db, roles, users, sp.GetRequiredService<ILogger<Program>>());
+            await CMS.Infrastructure.Clients.ServiceSchemaSeeder.ApplyAsync(db,
+                sp.GetRequiredService<ILogger<Program>>());
+            await CMS.Infrastructure.Compliance.ComplianceDefaultsSeeder.ApplyAsync(db,
+                sp.GetRequiredService<ILogger<Program>>());
+        }
+        if (seedDemoData)
+        {
+            await CMS.Infrastructure.Persistence.DevSampleDataSeeder.ApplyAsync(db,
+                sp.GetRequiredService<ILogger<Program>>());
+        }
     }
     catch (Exception ex)
     {
-        app.Logger.LogError(ex, "Dev seed/migrate failed. Continuing startup.");
+        app.Logger.LogError(ex, "Startup seed/migrate failed. Continuing startup.");
     }
 }
 
@@ -270,6 +305,49 @@ catch (Exception ex)
 finally
 {
     Log.CloseAndFlush();
+}
+
+static bool IsOriginAllowed(string origin, IReadOnlyList<string> patterns)
+{
+    if (string.IsNullOrWhiteSpace(origin)) return false;
+    if (!Uri.TryCreate(origin, UriKind.Absolute, out var originUri)) return false;
+
+    foreach (var pattern in patterns)
+    {
+        if (string.Equals(origin, pattern, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (pattern.Contains("://*.", StringComparison.Ordinal) &&
+            Uri.TryCreate(pattern.Replace("://*.", "://wildcard.", StringComparison.Ordinal), UriKind.Absolute, out var patternUri))
+        {
+            var suffix = patternUri.Host["wildcard".Length..];
+            if (string.Equals(originUri.Scheme, patternUri.Scheme, StringComparison.OrdinalIgnoreCase) &&
+                originUri.Host.EndsWith(suffix, StringComparison.OrdinalIgnoreCase) &&
+                originUri.Host.Length > suffix.Length)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+static async Task MigrateWithRetryAsync(CmsDbContext db, Microsoft.Extensions.Logging.ILogger logger)
+{
+    const int maxAttempts = 4;
+    for (var attempt = 1; attempt <= maxAttempts; attempt++)
+    {
+        try
+        {
+            await db.Database.MigrateAsync();
+            return;
+        }
+        catch (Exception ex) when (attempt < maxAttempts)
+        {
+            logger.LogWarning(ex, "Database migration attempt {Attempt}/{Max} failed; retrying in 3s...", attempt, maxAttempts);
+            await Task.Delay(TimeSpan.FromSeconds(3));
+        }
+    }
 }
 
 public partial class Program;

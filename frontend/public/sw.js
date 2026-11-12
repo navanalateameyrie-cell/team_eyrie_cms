@@ -1,6 +1,6 @@
 // CMS Portal service worker. Caches the app shell; network-first for API, cache-first for static.
 // Bump CACHE_NAME to force clients to refresh their cached assets.
-const CACHE_NAME = "cms-portal-v1";
+const CACHE_NAME = "cms-portal-v2";
 const SHELL = ["/", "/portal", "/manifest.webmanifest", "/icon-192.svg", "/icon-512.svg"];
 
 self.addEventListener("install", (event) => {
@@ -20,6 +20,7 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
 
   // API: network-first, no caching (auth sensitive).
   if (url.pathname.startsWith("/api/")) {

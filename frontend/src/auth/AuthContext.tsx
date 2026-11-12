@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import {
+  apiUrl,
   readStorage,
   setAuthStorage,
   clearAuthStorage,
@@ -56,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [state]);
 
   const login = useCallback(async (email: string, password: string) => {
-    const res = await fetch("/api/v1/auth/login", {
+    const res = await fetch(apiUrl("/api/v1/auth/login"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -75,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const completeMfa = useCallback(async (pendingToken: string, code: string) => {
-    const res = await fetch("/api/v1/auth/mfa/challenge", {
+    const res = await fetch(apiUrl("/api/v1/auth/mfa/challenge"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ mfaPendingToken: pendingToken, code }),
@@ -90,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function ingestTokens(email: string | null, data: {
     accessToken: string; refreshToken: string; roles: string[]; permissions: string[];
   }) {
-    const me = await fetch("/api/v1/auth/me", {
+    const me = await fetch(apiUrl("/api/v1/auth/me"), {
       headers: { Authorization: `Bearer ${data.accessToken}` },
     }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
 
@@ -120,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 2. Best-effort server-side token revocation
     try {
       if (current) {
-        await fetch("/api/v1/auth/logout", {
+        await fetch(apiUrl("/api/v1/auth/logout"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ refreshToken: current }),
@@ -139,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 2. Best-effort server-side token revocation
     try {
       if (currentToken) {
-        await fetch("/api/v1/auth/logout-everywhere", {
+        await fetch(apiUrl("/api/v1/auth/logout-everywhere"), {
           method: "POST",
           headers: { Authorization: `Bearer ${currentToken}` },
         });

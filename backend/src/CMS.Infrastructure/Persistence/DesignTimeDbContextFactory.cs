@@ -21,7 +21,7 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<CmsDbConte
             .AddEnvironmentVariables()
             .Build();
 
-        var conn = config.GetConnectionString("CmsDb")
+        var conn = PostgresConnectionStringHelper.Resolve(config)
                    ?? "Host=localhost;Port=5432;Database=cms;Username=postgres;Password=postgres";
 
         var options = new DbContextOptionsBuilder<CmsDbContext>()

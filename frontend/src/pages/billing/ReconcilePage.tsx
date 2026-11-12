@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { apiFetch } from "../../api/client";
+import { apiFetch, apiRawFetch } from "../../api/client";
 import { useAuth } from "../../auth/AuthContext";
 import { formatInr } from "../../utils/formatters";
 import {
@@ -110,16 +110,8 @@ export function ReconcilePage() {
     try {
       const form = new FormData();
       form.append("File", file);
-      const token = (() => {
-        try {
-          return JSON.parse(localStorage.getItem("cms.auth.v1") ?? "null")?.token ?? null;
-        } catch {
-          return null;
-        }
-      })();
-      const res = await fetch("/api/v1/billing/reconcile/upload", {
+      const res = await apiRawFetch("/api/v1/billing/reconcile/upload", {
         method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         body: form,
       });
       if (!res.ok) {

@@ -20,8 +20,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("CmsDb")
-            ?? throw new InvalidOperationException("ConnectionStrings:CmsDb is not configured.");
+        var connectionString = PostgresConnectionStringHelper.Resolve(configuration)
+            ?? throw new InvalidOperationException("ConnectionStrings:CmsDb (or DATABASE_URL) is not configured.");
 
         services.AddScoped<AuditingInterceptor>();
         services.AddScoped<IAuditService, AuditService>();

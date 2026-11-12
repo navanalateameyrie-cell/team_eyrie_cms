@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { apiFetch } from "../../api/client";
+import { apiFetch, apiRawFetch } from "../../api/client";
 import { useAuth } from "../../auth/AuthContext";
 import {
   PageHeader,
@@ -468,16 +468,7 @@ async function openLetter(obligationId: string) {
   const idx = Number(pick) - 1;
   if (!(idx >= 0 && idx < templates.length)) return;
   const template = templates[idx];
-  const token = (() => {
-    try {
-      return JSON.parse(localStorage.getItem("cms.auth.v1") ?? "null")?.token ?? null;
-    } catch {
-      return null;
-    }
-  })();
-  const r = await fetch(`/api/v1/compliance/${obligationId}/letter?templateId=${template.id}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-  });
+  const r = await apiRawFetch(`/api/v1/compliance/${obligationId}/letter?templateId=${template.id}`);
   if (!r.ok) {
     alert(`Letter generation failed (${r.status})`);
     return;

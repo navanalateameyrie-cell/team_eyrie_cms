@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { apiFetch } from "../../api/client";
+import { apiFetch, apiRawFetch } from "../../api/client";
 import { Card, PageHeader, Button, Badge, EmptyState, LoadingSpinner } from "../../components/ui";
 
 interface D {
@@ -62,16 +62,7 @@ export default function PortalDocumentsPage() {
   async function download(doc: D) {
     setDownloadingId(doc.id);
     try {
-      const token = (() => {
-        try {
-          return JSON.parse(localStorage.getItem("cms.auth.v1") ?? "null")?.token ?? null;
-        } catch {
-          return null;
-        }
-      })();
-      const r = await fetch(`/api/v1/portal/documents/${doc.id}/download`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
+      const r = await apiRawFetch(`/api/v1/portal/documents/${doc.id}/download`);
       if (!r.ok) {
         alert(`Download failed (${r.status})`);
         return;

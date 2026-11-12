@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { auditApi, type AuditAction, type AuditEntryDto, type FieldDiff, type FilterOptionsDto } from "../../api/audit";
+import { apiRawFetch } from "../../api/client";
 import { clientsApi, type ClientSummaryDto } from "../../api/clients";
 import { Card, Badge, Button, LoadingSpinner } from "../../components/ui";
 
@@ -81,8 +82,7 @@ export default function AuditExplorerPage() {
       fromUtc: filters.fromUtc ? new Date(filters.fromUtc).toISOString() : undefined,
       toUtc: filters.toUtc ? new Date(filters.toUtc).toISOString() : undefined,
     });
-    const token = JSON.parse(localStorage.getItem("cms.auth.v1") ?? "null")?.token ?? null;
-    const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : undefined });
+    const res = await apiRawFetch(url);
     if (!res.ok) {
       setError(`Export failed (${res.status})`);
       return;

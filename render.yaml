@@ -1,0 +1,43 @@
+version: "1"
+
+# Free Demo Blueprint for CMS_CA Backend + PostgreSQL on Render.
+# Frontend is hosted separately on Vercel (Root Directory: frontend).
+#
+# Tip: For faster latency from India, uncomment `region: singapore` on BOTH
+# the web service and the database so they stay in the same region.
+
+services:
+  - type: web
+    name: cms-ca-api
+    runtime: docker
+    plan: free
+    # region: singapore
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: cms-ca-db
+          property: connectionString
+      - key: Jwt__SigningKey
+        generateValue: true
+      - key: Db__AutoMigrate
+        value: "true"
+      - key: Db__SeedOnStartup
+        value: "true"
+      - key: Db__SeedDemoData
+        value: "true"
+      - key: Swagger__Enabled
+        value: "true"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://*.vercel.app,http://localhost:5173"
+
+databases:
+  - name: cms-ca-db
+    plan: free
+    # region: singapore
+    databaseName: cms_ca
+    user: cms_user

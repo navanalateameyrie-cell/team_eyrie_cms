@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { apiFetch } from "../../api/client";
+import { apiFetch, apiRawFetch } from "../../api/client";
 import { useAuth } from "../../auth/AuthContext";
 import { formatInr } from "../../utils/formatters";
 import InvoiceCreateDialog from "./InvoiceCreateDialog";
@@ -207,17 +207,8 @@ export function BillingPage() {
   }
 
   async function downloadPdf(inv: InvoiceDto) {
-    const token = (() => {
-      try {
-        return JSON.parse(localStorage.getItem("cms.auth.v1") ?? "null")?.token ?? null;
-      } catch {
-        return null;
-      }
-    })();
     try {
-      const res = await fetch(`/api/v1/billing/invoices/${inv.id}/pdf`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
+      const res = await apiRawFetch(`/api/v1/billing/invoices/${inv.id}/pdf`);
       if (!res.ok) {
         alert(`PDF generation failed (${res.status})`);
         return;

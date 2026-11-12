@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { apiUrl } from "../api/client";
 import { Button } from "../components/ui";
 
 export default function ForgotPasswordPage() {
@@ -10,7 +11,7 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setStatus("sending");
     try {
-      const r = await fetch("/api/v1/auth/forgot-password", {
+      const r = await fetch(apiUrl("/api/v1/auth/forgot-password"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

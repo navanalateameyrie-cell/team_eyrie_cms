@@ -1,17 +1,7 @@
-const STORAGE_KEY = "cms.auth.v1";
-
-function tokenFromStorage(): string | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const p = JSON.parse(raw) as { token?: string };
-    return p.token ?? null;
-  } catch { return null; }
-}
+import { apiRawFetch } from "./client";
 
 async function downloadXlsx(path: string, suggestedName: string) {
-  const token = tokenFromStorage();
-  const res = await fetch(path, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  const res = await apiRawFetch(path);
   if (!res.ok) {
     if (res.status === 403) throw new Error("You don't have permission to export.");
     throw new Error(`Export failed (${res.status})`);

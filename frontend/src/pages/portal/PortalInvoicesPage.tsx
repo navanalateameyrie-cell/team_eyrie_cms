@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { apiFetch } from "../../api/client";
+import { apiFetch, apiRawFetch } from "../../api/client";
 import { Card, PageHeader, MetricCard, Badge, Button, EmptyState, LoadingSpinner } from "../../components/ui";
 import { formatInr } from "../../utils/formatters";
 
@@ -55,16 +55,7 @@ export default function PortalInvoicesPage() {
   async function downloadPdf(inv: Inv) {
     setDownloadingId(inv.id);
     try {
-      const token = (() => {
-        try {
-          return JSON.parse(localStorage.getItem("cms.auth.v1") ?? "null")?.token ?? null;
-        } catch {
-          return null;
-        }
-      })();
-      const r = await fetch(`/api/v1/portal/invoices/${inv.id}/pdf`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
+      const r = await apiRawFetch(`/api/v1/portal/invoices/${inv.id}/pdf`);
       if (!r.ok) {
         alert(`Download failed (${r.status})`);
         return;

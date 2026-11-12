@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { apiUrl } from "../api/client";
 import { Button } from "../components/ui";
 
 export default function ResetPasswordPage() {
@@ -24,7 +25,7 @@ export default function ResetPasswordPage() {
     }
     setStatus("saving");
     try {
-      const r = await fetch("/api/v1/auth/reset-password", {
+      const r = await fetch(apiUrl("/api/v1/auth/reset-password"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, newPassword: password }),

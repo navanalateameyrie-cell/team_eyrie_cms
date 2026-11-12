@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
-import { readStorage } from "../api/client";
+import { apiUrl, readStorage } from "../api/client";
 import { Button } from "../components/ui";
 
 export default function LoginPage() {
@@ -14,8 +14,23 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [waking, setWaking] = useState(false);
   const [mfaPending, setMfaPending] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState("");
+
+  useEffect(() => {
+    // Pre-warm the API server so free-tier cold starts begin immediately when opening login.
+    fetch(apiUrl("/api/v1/health")).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!busy) {
+      setWaking(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setWaking(true), 4000);
+    return () => window.clearTimeout(timer);
+  }, [busy]);
 
   function navigateAfterLogin() {
     const env = readStorage();
@@ -30,6 +45,9 @@ export default function LoginPage() {
 
   function parseErrorMessage(ex: unknown): string {
     if (!(ex instanceof Error)) return "Authentication failed. Please check your credentials.";
+    if (ex.message === "Failed to fetch" || ex.message === "Load failed") {
+      return "Unable to reach the API server. If hosted on a free tier, the backend may still be waking up — please retry in a few seconds.";
+    }
     try {
       const data = JSON.parse(ex.message);
       if (data.detail && typeof data.detail === "string") {
@@ -288,6 +306,12 @@ export default function LoginPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span>{err}</span>
+              </div>
+            )}
+
+            {waking && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                Server is waking up from sleep mode (first request on free hosting can take 20–50 seconds). Please hold on…
               </div>
             )}
 

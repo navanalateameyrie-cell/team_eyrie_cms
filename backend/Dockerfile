@@ -31,15 +31,14 @@ COPY --from=build /app/publish ./
 RUN mkdir -p /app/App_Data/documents /app/App_Data/mail-drop && \
     chown -R app:app /app/App_Data
 
-# Kestrel listens on 8080 (unprivileged) so we can run non-root.
-ENV ASPNETCORE_URLS=http://+:8080 \
-    ASPNETCORE_ENVIRONMENT=Production \
+# Kestrel binds $PORT (Render/cloud) or defaults to 8080 (Docker Compose / local).
+ENV ASPNETCORE_ENVIRONMENT=Production \
     DOTNET_RUNNING_IN_CONTAINER=true
 
 USER app
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD wget -qO- http://127.0.0.1:8080/api/v1/health || exit 1
+    CMD wget -qO- "http://127.0.0.1:${PORT:-8080}/api/v1/health" || exit 1
 
-ENTRYPOINT ["dotnet", "CMS.Api.dll"]
+ENTRYPOINT ["sh", "-c", "export ASPNETCORE_URLS=\"http://+:${PORT:-8080}\" && exec dotnet CMS.Api.dll"]

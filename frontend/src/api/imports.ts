@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, apiRawFetch } from "./client";
 
 export type ImportBatchStatus =
   | "Received" | "Parsed" | "Validated" | "Committed" | "Failed" | "Cancelled";
@@ -59,16 +59,6 @@ export interface ReconciliationDto {
   serviceFileRowsWithErrors: number;
 }
 
-const STORAGE_KEY = "cms.auth.v1";
-function tokenFromStorage(): string | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const p = JSON.parse(raw) as { token?: string };
-    return p.token ?? null;
-  } catch { return null; }
-}
-
 export const importsApi = {
   list: () => apiFetch<BatchDto[]>("/api/v1/imports"),
   get: (id: string) => apiFetch<BatchDto>(`/api/v1/imports/${id}`),
@@ -89,11 +79,8 @@ export const importsApi = {
   upload: async (file: File): Promise<{ batchId: string; wasDuplicate: boolean; sha256: string }> => {
     const fd = new FormData();
     fd.append("file", file);
-    // apiFetch sets Content-Type: application/json when a body is present; for multipart, bypass it.
-    const token = tokenFromStorage();
-    const res = await fetch("/api/v1/imports/upload", {
+    const res = await apiRawFetch("/api/v1/imports/upload", {
       method: "POST",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: fd,
     });
     if (!res.ok) throw new Error(`Upload failed (${res.status})`);

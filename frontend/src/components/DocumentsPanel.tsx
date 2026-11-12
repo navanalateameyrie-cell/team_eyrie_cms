@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { apiFetch, ApiError } from "../api/client";
+import { API_BASE_URL, apiFetch, apiRawFetch, ApiError } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { Button, Input, Badge, LoadingSpinner } from "./ui";
 
@@ -32,15 +32,6 @@ interface Props {
   ownerType: DocumentOwnerType;
   ownerId: string;
   title?: string;
-}
-
-const STORAGE_KEY = "cms.auth.v1";
-function readToken(): string | null {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null")?.token ?? null;
-  } catch {
-    return null;
-  }
 }
 
 export default function DocumentsPanel({ ownerType, ownerId, title = "Documents" }: Props) {
@@ -89,10 +80,8 @@ export default function DocumentsPanel({ ownerType, ownerId, title = "Documents"
       form.append("OwnerId", ownerId);
       if (category) form.append("Category", category);
       if (description) form.append("Description", description);
-      const token = readToken();
-      const res = await fetch("/api/v1/documents/upload", {
+      const res = await apiRawFetch("/api/v1/documents/upload", {
         method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         body: form,
       });
       if (!res.ok) {
@@ -111,10 +100,7 @@ export default function DocumentsPanel({ ownerType, ownerId, title = "Documents"
   }
 
   async function download(doc: DocumentDto) {
-    const token = readToken();
-    const res = await fetch(`/api/v1/documents/${doc.id}/download`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    });
+    const res = await apiRawFetch(`/api/v1/documents/${doc.id}/download`);
     if (!res.ok) {
       setError(`Download failed (${res.status})`);
       return;
@@ -135,7 +121,7 @@ export default function DocumentsPanel({ ownerType, ownerId, title = "Documents"
       const res = await apiFetch<{ url: string; expiresAtUtc: string }>(
         `/api/v1/documents/${doc.id}/signed-url?ttlSeconds=600`
       );
-      const absolute = window.location.origin + res.url;
+      const absolute = (API_BASE_URL || window.location.origin) + res.url;
       await navigator.clipboard.writeText(absolute);
       alert(`Shareable access link copied (valid until ${new Date(res.expiresAtUtc).toLocaleTimeString()}).`);
     } catch (e) {
@@ -187,10 +173,8 @@ export default function DocumentsPanel({ ownerType, ownerId, title = "Documents"
       if (!f) return;
       const form = new FormData();
       form.append("File", f);
-      const token = readToken();
-      const res = await fetch(`/api/v1/documents/${docId}/versions`, {
+      const res = await apiRawFetch(`/api/v1/documents/${docId}/versions`, {
         method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         body: form,
       });
       if (!res.ok) {
@@ -203,10 +187,7 @@ export default function DocumentsPanel({ ownerType, ownerId, title = "Documents"
   }
 
   async function downloadVersion(docId: string, v: DocVersion) {
-    const token = readToken();
-    const res = await fetch(`/api/v1/documents/${docId}/versions/${v.id}/download`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    });
+    const res = await apiRawFetch(`/api/v1/documents/${docId}/versions/${v.id}/download`);
     if (!res.ok) {
       setError(`Download failed (${res.status})`);
       return;

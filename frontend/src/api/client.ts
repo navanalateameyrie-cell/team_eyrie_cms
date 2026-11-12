@@ -5,6 +5,14 @@ export interface HealthResponse {
   utc: string;
 }
 
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/+$/, "");
+
+export function apiUrl(path: string): string {
+  if (/^https?:\/\//i.test(path)) return path;
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return `${API_BASE_URL}${normalized}`;
+}
+
 export const STORAGE_KEY = "cms.auth.v1";
 const CORRELATION_HEADER = "X-Correlation-Id";
 
@@ -100,7 +108,7 @@ async function tryRefresh(): Promise<string | null> {
 
   refreshInFlight = (async () => {
     try {
-      const res = await fetch("/api/v1/auth/refresh", {
+      const res = await fetch(apiUrl("/api/v1/auth/refresh"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ refreshToken }),
@@ -118,28 +126,41 @@ async function tryRefresh(): Promise<string | null> {
   return refreshInFlight;
 }
 
-async function fetchOnce(path: string, init: RequestInit | undefined, bearer: string | null): Promise<Response> {
+async function fetchOnce(
+  path: string,
+  init: RequestInit | undefined,
+  bearer: string | null,
+  expectJson: boolean,
+): Promise<Response> {
   const headers = new Headers(init?.headers);
   if (!headers.has(CORRELATION_HEADER)) headers.set(CORRELATION_HEADER, newCorrelationId());
-  if (!headers.has("Accept")) headers.set("Accept", "application/json");
-  if (init?.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
-  if (bearer) headers.set("Authorization", `Bearer ${bearer}`);
-  return fetch(path, { ...init, headers });
+  const isFormData = typeof FormData !== "undefined" && init?.body instanceof FormData;
+  if (expectJson && !headers.has("Accept")) headers.set("Accept", "application/json");
+  if (init?.body && !isFormData && expectJson && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  if (bearer && !headers.has("Authorization")) headers.set("Authorization", `Bearer ${bearer}`);
+  return fetch(apiUrl(path), { ...init, headers });
 }
 
-export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+export async function apiRawFetch(
+  path: string,
+  init?: RequestInit,
+  options?: { expectJson?: boolean },
+): Promise<Response> {
+  const expectJson = options?.expectJson ?? false;
   let access = getAccessToken();
   if (!access) {
     access = await tryRefresh();
   }
 
-  let res = await fetchOnce(path, init, access);
+  let res = await fetchOnce(path, init, access, expectJson);
 
   // 401 → attempt one silent refresh then replay. Only redirects to /login if that also fails.
   if (res.status === 401) {
     const next = await tryRefresh();
     if (next && next !== access) {
-      res = await fetchOnce(path, init, next);
+      res = await fetchOnce(path, init, next, expectJson);
     } else if (typeof window !== "undefined" && window.location
                && !window.location.pathname.startsWith("/login")) {
       clearAuthStorage();
@@ -147,6 +168,12 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
       window.location.href = `/login?next=${back}`;
     }
   }
+
+  return res;
+}
+
+export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await apiRawFetch(path, init, { expectJson: true });
 
   if (res.status === 204) return undefined as unknown as T;
   if (!res.ok) throw new ApiError(res.status, await res.text().catch(() => ""));
