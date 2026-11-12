@@ -51,4 +51,36 @@ public class ImportDedupeTests : IClassFixture<CmsApiFactory>
         var dto = (await resp.Content.ReadFromJsonAsync<ImportsController.UploadResponse>())!;
         dto.Sha256.Should().MatchRegex("^[0-9a-f]{64}$");
     }
+
+    [Fact]
+    public async Task Reuploading_After_Zero_Row_Commit_Creates_Fresh_Batch_And_Delete_Respects_Committed_Records()
+    {
+        var c = await AdminClientAsync(_factory);
+        await SeedEntityTypeAndServiceAsync(c, "DEL-ET", "DEL-SVC");
+
+        var bytes = BuildClientsSheet(new[]
+        {
+            new Dictionary<string, string> { ["LegalName"] = "Zero Commit Co", ["EntityTypeCode"] = "DEL-ET" },
+        });
+        var firstId = await UploadBytesAsync(c, bytes, "zero.xlsx");
+        (await c.PostAsync($"/api/v1/imports/{firstId}/validate", null)).EnsureSuccessStatusCode();
+        // Commit without Auto-Resolve -> 0 clients committed.
+        (await c.PostAsync($"/api/v1/imports/{firstId}/commit", null)).EnsureSuccessStatusCode();
+
+        // Same file re-upload should create a new batch since previous committed 0 records.
+        var secondId = await UploadBytesAsync(c, bytes, "zero.xlsx");
+        secondId.Should().NotBe(firstId);
+
+        // Zero-commit batch can be deleted.
+        var delFirst = await c.DeleteAsync($"/api/v1/imports/{firstId}");
+        delFirst.StatusCode.Should().Be(System.Net.HttpStatusCode.NoContent);
+
+        // Batch with committed master records cannot be deleted (409 Conflict).
+        (await c.PostAsync($"/api/v1/imports/{secondId}/validate", null)).EnsureSuccessStatusCode();
+        (await c.PostAsync($"/api/v1/imports/{secondId}/auto-resolve", null)).EnsureSuccessStatusCode();
+        (await c.PostAsync($"/api/v1/imports/{secondId}/commit", null)).EnsureSuccessStatusCode();
+
+        var delSecond = await c.DeleteAsync($"/api/v1/imports/{secondId}");
+        delSecond.StatusCode.Should().Be(System.Net.HttpStatusCode.Conflict);
+    }
 }

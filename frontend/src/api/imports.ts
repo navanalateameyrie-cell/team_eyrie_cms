@@ -72,6 +72,8 @@ export const importsApi = {
   commit: (id: string) =>
     apiFetch<{ clientsCreated: number; clientsUpdated: number; serviceFilesCreated: number; rowsSkipped: number; errors: number }>(
       `/api/v1/imports/${id}/commit`, { method: "POST" }),
+  remove: (id: string) =>
+    apiFetch<void>(`/api/v1/imports/${id}`, { method: "DELETE" }),
   setRowDecision: (rowId: string, decision: ImportDecision, decidedClientId: string | null) =>
     apiFetch<StagingClientDto>(`/api/v1/imports/rows/${rowId}`, {
       method: "PATCH", body: JSON.stringify({ decision, decidedClientId }),

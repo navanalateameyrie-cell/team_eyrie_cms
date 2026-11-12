@@ -178,6 +178,21 @@ public class ImportsController : ControllerBase
         return new CommitDto(r.ClientsCreated, r.ClientsUpdated, r.ServiceFilesCreated, r.RowsSkipped, r.Errors);
     }
 
+    [HttpDelete("{id:guid}")]
+    [HasPermission(Permissions.Imports.Write)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    {
+        try
+        {
+            var deleted = await _engine.DeleteBatchAsync(id, ct);
+            return deleted ? NoContent() : NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { error = "batch_has_committed_records", detail = ex.Message });
+        }
+    }
+
     [HttpGet("{id:guid}/reconciliation")]
     [HasPermission(Permissions.Imports.Read)]
     public async Task<ActionResult<ReconciliationDto>> Reconciliation(Guid id, CancellationToken ct)

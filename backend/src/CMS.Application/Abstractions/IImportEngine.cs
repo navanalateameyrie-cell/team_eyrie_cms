@@ -11,6 +11,7 @@ public interface IImportEngine
     Task ValidateAndMatchAsync(Guid batchId, CancellationToken ct = default);
     Task AutoResolveAsync(Guid batchId, CancellationToken ct = default);
     Task<CommitResult> CommitAsync(Guid batchId, CancellationToken ct = default);
+    Task<bool> DeleteBatchAsync(Guid batchId, CancellationToken ct = default);
 }
 
 public record UploadResult(Guid BatchId, bool WasDuplicate, string Sha256);

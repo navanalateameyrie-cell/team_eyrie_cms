@@ -73,7 +73,10 @@ public class ImportEngine : IImportEngine
         var liveCandidates = await _db.ImportBatches
             .Where(b => b.FileSha256 == hash
                      && b.Status != ImportBatchStatus.Failed
-                     && b.Status != ImportBatchStatus.Cancelled)
+                     && b.Status != ImportBatchStatus.Cancelled
+                     && !(b.Status == ImportBatchStatus.Committed
+                          && b.CommittedClientCount == 0
+                          && b.CommittedServiceFileCount == 0))
             .ToListAsync(ct);
         var existing = liveCandidates
             .OrderByDescending(b => b.UploadedAtUtc)
@@ -517,6 +520,10 @@ public class ImportEngine : IImportEngine
                 // Resolve a default entity type for CreateNew rows that don't supply one — a safety net
                 // in test envs. If no master exists, we skip those rows and count them as errors.
                 Guid? fallbackEntityTypeId = entityCodes.Count > 0 ? entityCodes.Values.First() : null;
+                const int saveChunkSize = 250;
+
+                var createPlans = new List<(ImportStagingClient Row, string LegalName, Guid EntityTypeId, Guid? GroupId)>();
+                var updatePlans = new List<(ImportStagingClient Row, Guid ClientId)>();
 
                 foreach (var row in clientRows)
                 {
@@ -525,55 +532,82 @@ public class ImportEngine : IImportEngine
                         case ImportDecision.Skip:
                         case ImportDecision.Pending:
                             skipped++;
-                            continue;
+                            break;
 
                         case ImportDecision.CreateNew:
-                            {
-                                if (string.IsNullOrWhiteSpace(row.NormalizedLegalName)) { errors++; continue; }
-                                Guid? etId = row.EntityTypeCode is not null && entityCodes.TryGetValue(row.EntityTypeCode, out var fromCode)
-                                    ? fromCode : fallbackEntityTypeId;
-                                if (etId is null) { errors++; continue; }
+                            if (string.IsNullOrWhiteSpace(row.NormalizedLegalName)) { errors++; break; }
+                            Guid? etId = row.EntityTypeCode is not null && entityCodes.TryGetValue(row.EntityTypeCode, out var fromCode)
+                                ? fromCode : fallbackEntityTypeId;
+                            if (etId is null) { errors++; break; }
 
-                                Guid? grpId = null;
-                                if (row.ClientGroupCode is not null && groupCodes.TryGetValue(row.ClientGroupCode, out var g))
-                                    grpId = g;
+                            Guid? grpId = null;
+                            if (row.ClientGroupCode is not null && groupCodes.TryGetValue(row.ClientGroupCode, out var g))
+                                grpId = g;
 
-                                var code = await _clientCodes.NextAsync(ct);
-                                var client = new Client(code, row.NormalizedLegalName, etId.Value,
-                                                        row.NormalizedTradeName, row.NormalizedPan, grpId,
-                                                        row.NormalizedLegacyClientId);
-                                _db.Clients.Add(client);
-                                await _db.SaveChangesAsync(ct);
-                                row.MarkCommitted(client.Id);
-                                created++;
-                                break;
-                            }
+                            createPlans.Add((row, row.NormalizedLegalName, etId.Value, grpId));
+                            break;
 
                         case ImportDecision.UpdateExisting:
-                            {
-                                if (row.DecidedClientId is null) { errors++; continue; }
-                                var client = await _db.Clients.FirstOrDefaultAsync(c => c.Id == row.DecidedClientId, ct);
-                                if (client is null) { errors++; continue; }
-
-                                var etId = row.EntityTypeCode is not null && entityCodes.TryGetValue(row.EntityTypeCode, out var fromCode)
-                                    ? fromCode : client.EntityTypeId;
-                                Guid? grpId = client.ClientGroupId;
-                                if (row.ClientGroupCode is not null && groupCodes.TryGetValue(row.ClientGroupCode, out var g))
-                                    grpId = g;
-
-                                client.UpdateProfile(
-                                    legalName: row.NormalizedLegalName ?? client.LegalName,
-                                    tradeName: row.NormalizedTradeName ?? client.TradeName,
-                                    pan: row.NormalizedPan ?? client.Pan,
-                                    entityTypeId: etId,
-                                    clientGroupId: grpId,
-                                    legacyClientId: row.NormalizedLegacyClientId ?? client.LegacyClientId);
-                                await _db.SaveChangesAsync(ct);
-                                row.MarkCommitted(client.Id);
-                                updated++;
-                                break;
-                            }
+                            if (row.DecidedClientId is null) { errors++; break; }
+                            updatePlans.Add((row, row.DecidedClientId.Value));
+                            break;
                     }
+                }
+
+                if (updatePlans.Count > 0)
+                {
+                    var updateIds = updatePlans.Select(u => u.ClientId).Distinct().ToArray();
+                    var existingClients = await _db.Clients
+                        .Where(c => updateIds.Contains(c.Id))
+                        .ToDictionaryAsync(c => c.Id, ct);
+
+                    int pendingUpdates = 0;
+                    foreach (var (row, decidedId) in updatePlans)
+                    {
+                        if (!existingClients.TryGetValue(decidedId, out var client)) { errors++; continue; }
+
+                        var etId = row.EntityTypeCode is not null && entityCodes.TryGetValue(row.EntityTypeCode, out var fromCode)
+                            ? fromCode : client.EntityTypeId;
+                        Guid? grpId = client.ClientGroupId;
+                        if (row.ClientGroupCode is not null && groupCodes.TryGetValue(row.ClientGroupCode, out var g))
+                            grpId = g;
+
+                        client.UpdateProfile(
+                            legalName: row.NormalizedLegalName ?? client.LegalName,
+                            tradeName: row.NormalizedTradeName ?? client.TradeName,
+                            pan: row.NormalizedPan ?? client.Pan,
+                            entityTypeId: etId,
+                            clientGroupId: grpId,
+                            legacyClientId: row.NormalizedLegacyClientId ?? client.LegacyClientId);
+                        row.MarkCommitted(client.Id);
+                        updated++;
+                        pendingUpdates++;
+
+                        if (pendingUpdates % saveChunkSize == 0)
+                            await _db.SaveChangesAsync(ct);
+                    }
+                    if (pendingUpdates % saveChunkSize != 0)
+                        await _db.SaveChangesAsync(ct);
+                }
+
+                if (createPlans.Count > 0)
+                {
+                    var allocatedCodes = await _clientCodes.NextBatchAsync(createPlans.Count, ct);
+                    for (int i = 0; i < createPlans.Count; i++)
+                    {
+                        var (row, legalName, etId, grpId) = createPlans[i];
+                        var client = new Client(allocatedCodes[i], legalName, etId,
+                                                row.NormalizedTradeName, row.NormalizedPan, grpId,
+                                                row.NormalizedLegacyClientId);
+                        _db.Clients.Add(client);
+                        row.MarkCommitted(client.Id);
+                        created++;
+
+                        if ((i + 1) % saveChunkSize == 0)
+                            await _db.SaveChangesAsync(ct);
+                    }
+                    if (createPlans.Count % saveChunkSize != 0)
+                        await _db.SaveChangesAsync(ct);
                 }
 
                 // State-scoped service codes that should be auto-linked to the client's primary branch
@@ -581,34 +615,59 @@ public class ImportEngine : IImportEngine
                 var stateScopedCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "GST", "AGST", "TDS", "PT", "ESIPF" };
 
-                // Preload primary branches + active regs for every committed client in this batch.
+                // Preload primary branches + active regs + existing service files once for every committed client.
                 var committedClientIds = clientRows
                     .Select(r => r.CommittedClientId ?? r.DecidedClientId)
                     .Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToArray();
-                var primaryBranchByClient = await _db.Branches.AsNoTracking()
-                    .Where(b => committedClientIds.Contains(b.ClientId) && b.IsPrimary && b.IsActive)
-                    .Select(b => new { b.ClientId, b.Id })
-                    .ToDictionaryAsync(x => x.ClientId, x => (Guid?)x.Id, ct);
-                var regsByBranch = await _db.TaxRegistrations.AsNoTracking()
-                    .Where(r => r.IsActive)
-                    .ToDictionaryAsync(r => (r.BranchId, r.Type), r => r.Number, ct);
+                var primaryBranchByClient = committedClientIds.Length == 0
+                    ? new Dictionary<Guid, Guid?>()
+                    : await _db.Branches.AsNoTracking()
+                        .Where(b => committedClientIds.Contains(b.ClientId) && b.IsPrimary && b.IsActive)
+                        .Select(b => new { b.ClientId, b.Id })
+                        .ToDictionaryAsync(x => x.ClientId, x => (Guid?)x.Id, ct);
+                var primaryBranchIds = primaryBranchByClient.Values.Where(v => v.HasValue).Select(v => v!.Value).ToArray();
+                var regsByBranch = primaryBranchIds.Length == 0
+                    ? new Dictionary<(Guid BranchId, Domain.Entities.TaxRegistrationType Type), string>()
+                    : await _db.TaxRegistrations.AsNoTracking()
+                        .Where(r => r.IsActive && primaryBranchIds.Contains(r.BranchId))
+                        .ToDictionaryAsync(r => (r.BranchId, r.Type), r => r.Number, ct);
+                var existingFiles = committedClientIds.Length == 0
+                    ? Enumerable.Empty<(Guid ClientId, Guid ServiceDefinitionId, string? LegacyFileNumber)>().ToList()
+                    : (await _db.ServiceFiles.AsNoTracking()
+                        .Where(f => committedClientIds.Contains(f.ClientId))
+                        .Select(f => new { f.ClientId, f.ServiceDefinitionId, f.LegacyFileNumber })
+                        .ToListAsync(ct))
+                        .Select(f => (f.ClientId, f.ServiceDefinitionId, f.LegacyFileNumber))
+                        .ToList();
+
+                var existingAny = new HashSet<(Guid ClientId, Guid ServiceId)>(
+                    existingFiles.Select(f => (f.ClientId, f.ServiceDefinitionId)));
+                var existingLegacy = new HashSet<(Guid ClientId, Guid ServiceId, string Legacy)>(
+                    existingFiles.Where(f => f.LegacyFileNumber is not null)
+                                 .Select(f => (f.ClientId, f.ServiceDefinitionId, f.LegacyFileNumber!)));
+
+                var rowById = clientRows.ToDictionary(r => r.Id);
+                var jsonOpts = new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase };
+                var sfPlans = new List<(ImportStagingServiceFile Row, Guid ClientId, Guid SvcId, Guid? BranchId, string? MetadataJson)>();
 
                 // Final-sheet service-column staging rows: create a ServiceFile for the resolved client.
                 foreach (var sf in sfRows)
                 {
-                    var parent = clientRows.FirstOrDefault(r => r.Id == sf.SourceStagingClientId);
-                    if (parent is null) { errors++; continue; }
+                    if (!rowById.TryGetValue(sf.SourceStagingClientId, out var parent)) { errors++; continue; }
                     var clientId = parent.CommittedClientId ?? parent.DecidedClientId;
                     if (clientId is null) { skipped++; continue; }
 
                     if (!svcByCode.TryGetValue(sf.ServiceCode, out var svcId)) { errors++; continue; }
 
                     // Skip exact duplicates — same client + service + legacy number already committed earlier.
-                    var already = await _db.ServiceFiles.AnyAsync(f =>
-                        f.ClientId == clientId.Value &&
-                        f.ServiceDefinitionId == svcId &&
-                        (sf.LegacyFileNumber == null || f.LegacyFileNumber == sf.LegacyFileNumber), ct);
+                    var already = sf.LegacyFileNumber is null
+                        ? existingAny.Contains((clientId.Value, svcId))
+                        : existingLegacy.Contains((clientId.Value, svcId, sf.LegacyFileNumber));
                     if (already) { skipped++; sf.SetDecision(ImportDecision.Skip); continue; }
+
+                    existingAny.Add((clientId.Value, svcId));
+                    if (sf.LegacyFileNumber is not null)
+                        existingLegacy.Add((clientId.Value, svcId, sf.LegacyFileNumber));
 
                     // Auto-link state-scoped services to the client's primary branch + stamp GSTIN/TAN.
                     Guid? branchId = null;
@@ -623,21 +682,35 @@ public class ImportEngine : IImportEngine
                         if (regsByBranch.TryGetValue((pb.Value, Domain.Entities.TaxRegistrationType.Tan), out var tan))
                             meta["tan"] = tan;
                         if (meta.Count > 0)
-                            metadataJson = System.Text.Json.JsonSerializer.Serialize(meta,
-                                new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
+                            metadataJson = System.Text.Json.JsonSerializer.Serialize(meta, jsonOpts);
                     }
 
-                    var fileNumber = await _fileNumbers.NextAsync(ct);
-                    var file = new ServiceFile(fileNumber, clientId.Value, svcId, branchId,
-                                               openedOn: DateOnly.FromDateTime(DateTime.UtcNow),
-                                               legacyFileNumber: sf.LegacyFileNumber,
-                                               notes: sf.Notes);
-                    if (metadataJson is not null) file.SetMetadata(metadataJson);
-                    _db.ServiceFiles.Add(file);
-                    await _db.SaveChangesAsync(ct);
-                    sf.MarkCommitted(file.Id);
-                    sf.SetDecision(ImportDecision.CreateNew);
-                    filesCreated++;
+                    sfPlans.Add((sf, clientId.Value, svcId, branchId, metadataJson));
+                }
+
+                if (sfPlans.Count > 0)
+                {
+                    const int sfChunkSize = 250;
+                    var openedOn = DateOnly.FromDateTime(DateTime.UtcNow);
+                    var allocatedNumbers = await _fileNumbers.NextBatchAsync(sfPlans.Count, ct);
+                    for (int i = 0; i < sfPlans.Count; i++)
+                    {
+                        var (sf, clientId, svcId, branchId, metadataJson) = sfPlans[i];
+                        var file = new ServiceFile(allocatedNumbers[i], clientId, svcId, branchId,
+                                                   openedOn: openedOn,
+                                                   legacyFileNumber: sf.LegacyFileNumber,
+                                                   notes: sf.Notes);
+                        if (metadataJson is not null) file.SetMetadata(metadataJson);
+                        _db.ServiceFiles.Add(file);
+                        sf.MarkCommitted(file.Id);
+                        sf.SetDecision(ImportDecision.CreateNew);
+                        filesCreated++;
+
+                        if ((i + 1) % sfChunkSize == 0)
+                            await _db.SaveChangesAsync(ct);
+                    }
+                    if (sfPlans.Count % sfChunkSize != 0)
+                        await _db.SaveChangesAsync(ct);
                 }
 
                 batch.RecordCommit(created + updated, filesCreated);
@@ -656,5 +729,19 @@ public class ImportEngine : IImportEngine
         });
 
         return new CommitResult(created, updated, filesCreated, skipped, errors);
+    }
+
+    public async Task<bool> DeleteBatchAsync(Guid batchId, CancellationToken ct = default)
+    {
+        var batch = await _db.ImportBatches.FirstOrDefaultAsync(b => b.Id == batchId, ct);
+        if (batch is null) return false;
+        if (batch.CommittedClientCount > 0 || batch.CommittedServiceFileCount > 0)
+            throw new InvalidOperationException("Cannot delete an import batch that has committed master records.");
+
+        await _db.ImportStagingServiceFiles.Where(r => r.BatchId == batchId).ExecuteDeleteAsync(ct);
+        await _db.ImportStagingClients.Where(r => r.BatchId == batchId).ExecuteDeleteAsync(ct);
+        _db.ImportBatches.Remove(batch);
+        await _db.SaveChangesAsync(ct);
+        return true;
     }
 }

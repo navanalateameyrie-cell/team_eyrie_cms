@@ -158,30 +158,35 @@ export default function ImportBatchPage() {
                   Validate Staging Rows
                 </Button>
               )}
-              {getStatusName(batch.status) === "Validated" && (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    loading={busy}
-                    onClick={() => act(() => importsApi.autoResolve(batch.id), "Auto-resolve")}
-                  >
-                    Auto-Resolve Matches
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    loading={busy}
-                    onClick={() => {
-                      if (confirm(`Commit ${batch.rowCount} staging rows into Master Practice Records?`)) {
-                        void act(() => importsApi.commit(batch.id), "Commit");
-                      }
-                    }}
-                  >
-                    Commit to Master
-                  </Button>
-                </>
-              )}
+              {getStatusName(batch.status) === "Validated" && (() => {
+                const readyCount = (reco?.createNew ?? 0) + (reco?.updateExisting ?? 0);
+                return (
+                  <>
+                    <Button
+                      variant={readyCount === 0 ? "primary" : "outline"}
+                      size="sm"
+                      loading={busy}
+                      onClick={() => act(() => importsApi.autoResolve(batch.id), "Auto-resolve")}
+                    >
+                      Auto-Resolve Matches
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      loading={busy}
+                      disabled={readyCount === 0}
+                      title={readyCount === 0 ? "Run Auto-Resolve Matches first so valid rows are marked Create New / Update Existing." : undefined}
+                      onClick={() => {
+                        if (confirm(`Commit ${readyCount} resolved clients into Master Practice Records?`)) {
+                          void act(() => importsApi.commit(batch.id), "Commit");
+                        }
+                      }}
+                    >
+                      Commit to Master ({readyCount})
+                    </Button>
+                  </>
+                );
+              })()}
             </div>
           ) : undefined
         }
@@ -226,48 +231,54 @@ export default function ImportBatchPage() {
         </div>
       )}
 
-      {getStatusName(batch.status) === "Validated" && (
-        <div className="rounded-xl bg-emerald-900/40 border border-emerald-700/60 text-white p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="h-9 w-9 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+      {getStatusName(batch.status) === "Validated" && (() => {
+        const readyCount = (reco?.createNew ?? 0) + (reco?.updateExisting ?? 0);
+        return (
+          <div className="rounded-xl bg-emerald-900/40 border border-emerald-700/60 text-white p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="h-9 w-9 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="font-semibold text-sm text-white">Validation & Deduplication Complete</h4>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  {readyCount === 0
+                    ? "Step 1: Click Auto-Resolve Matches to mark clean rows as Create New / Update Existing before committing."
+                    : `${readyCount.toLocaleString()} client rows are ready to commit into Master Practice Records.`}
+                </p>
+              </div>
             </div>
-            <div>
-              <h4 className="font-semibold text-sm text-white">Validation & Deduplication Complete</h4>
-              <p className="text-xs text-slate-300 mt-0.5">
-                Review matched entities below. You can auto-resolve exact PAN matches or commit verified clients directly into Practice Master records.
-              </p>
-            </div>
+            {canWrite && (
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  variant={readyCount === 0 ? "gold" : "outline"}
+                  size="sm"
+                  loading={busy}
+                  onClick={() => act(() => importsApi.autoResolve(batch.id), "Auto-resolve")}
+                  className={readyCount === 0 ? "font-semibold" : "bg-white/10 text-white border-white/20 hover:bg-white/20"}
+                >
+                  Auto-Resolve Matches
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  loading={busy}
+                  disabled={readyCount === 0}
+                  onClick={() => {
+                    if (confirm(`Commit ${readyCount} resolved clients into Master Practice Records?`)) {
+                      void act(() => importsApi.commit(batch.id), "Commit");
+                    }
+                  }}
+                >
+                  Commit to Master ({readyCount})
+                </Button>
+              </div>
+            )}
           </div>
-          {canWrite && (
-            <div className="flex items-center gap-2 shrink-0">
-              <Button
-                variant="outline"
-                size="sm"
-                loading={busy}
-                onClick={() => act(() => importsApi.autoResolve(batch.id), "Auto-resolve")}
-                className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-              >
-                Auto-Resolve Matches
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                loading={busy}
-                onClick={() => {
-                  if (confirm(`Commit ${batch.rowCount} staging rows into Master Practice Records?`)) {
-                    void act(() => importsApi.commit(batch.id), "Commit");
-                  }
-                }}
-              >
-                Commit to Master
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
+        );
+      })()}
 
       {getStatusName(batch.status) === "Committed" && (
         <div className="rounded-xl bg-slate-900 border border-slate-700 text-white p-4 shadow-sm flex items-center justify-between">

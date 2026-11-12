@@ -85,6 +85,17 @@ export default function ImportsListPage() {
     }
   }
 
+  async function onDelete(b: BatchDto) {
+    if (!confirm(`Delete import batch "${b.fileName}"?`)) return;
+    setError(null);
+    try {
+      await importsApi.remove(b.id);
+      await load();
+    } catch (ex: unknown) {
+      setError(ex instanceof Error ? ex.message : "Delete failed");
+    }
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -97,9 +108,8 @@ export default function ImportsListPage() {
         actions={
           canWrite ? (
             <label
-              className={`cursor-pointer inline-flex items-center px-4 py-2 rounded-lg bg-brand-500 text-white text-xs font-semibold hover:bg-brand-600 transition-colors shadow-xs ${
-                busy ? "opacity-60 cursor-not-allowed" : ""
-              }`}
+              className={`cursor-pointer inline-flex items-center px-4 py-2 rounded-lg bg-brand-500 text-white text-xs font-semibold hover:bg-brand-600 transition-colors shadow-xs ${busy ? "opacity-60 cursor-not-allowed" : ""
+                }`}
             >
               <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -136,18 +146,19 @@ export default function ImportsListPage() {
                 <th className="px-4 py-3 text-right">Committed (Clients / Files)</th>
                 <th className="px-4 py-3 text-left">Pipeline State</th>
                 <th className="px-4 py-3 text-left">Ingested At</th>
+                {canWrite && <th className="px-4 py-3 text-right">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white">
               {loading && rows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center">
+                  <td colSpan={canWrite ? 8 : 7} className="px-4 py-12 text-center">
                     <LoadingSpinner text="Loading import history…" />
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12">
+                  <td colSpan={canWrite ? 8 : 7} className="px-4 py-12">
                     <EmptyState
                       title="No import batches uploaded yet"
                       description="Upload an Excel workbook with client records and service files to begin batch validation."
@@ -206,6 +217,21 @@ export default function ImportsListPage() {
                     <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
                       {new Date(b.uploadedAtUtc).toLocaleString()}
                     </td>
+                    {canWrite && (
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                        {b.committedClientCount === 0 && b.committedServiceFileCount === 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => void onDelete(b)}
+                            className="text-xs font-medium text-rose-600 hover:text-rose-800 hover:underline"
+                          >
+                            Delete
+                          </button>
+                        ) : (
+                          <span className="text-slate-300">—</span>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))
               )}
